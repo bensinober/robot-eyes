@@ -1310,6 +1310,19 @@ pub fn transpose(self: Self, dst: *Self) void {
     _ = c.Mat_Transpose(self.ptr, dst.*.ptr);
 }
 
+// Transpose an N-dimentional matrix given an int vector
+//
+// For further details, please see:
+// https://docs.opencv.org/4.x/d2/de8/group__core__array.html#gab1b1274b4a563be34cdfa55b8919a4ec
+//
+pub fn transposeND(self: Self, order: []i32, dst: *Self) void {
+    var c_order = c.struct_IntVector{
+        .val = @ptrCast(order.ptr),
+        .length = @intCast(order.len),
+    };
+    _ = c.Mat_TransposeND(self.ptr, c_order, dst.*.ptr);
+}
+
 // PolatToCart calculates x and y coordinates of 2D vectors from their magnitude and angle.
 //
 // For further details, please see:
@@ -1848,6 +1861,7 @@ pub const Mats = struct {
 //*    pub extern fn Mat_Trace(src: Mat) Scalar;
 //*    pub extern fn Mat_Transform(src: Mat, dst: Mat, tm: Mat) void;
 //*    pub extern fn Mat_Transpose(src: Mat, dst: Mat) void;
+//*    pub extern fn Mat_TransposeND(src: Mat, []i32, dst: Mat) void;
 //*    pub extern fn Mat_PolarToCart(magnitude: Mat, degree: Mat, x: Mat, y: Mat, angleInDegrees: bool) void;
 //*    pub extern fn Mat_Pow(src: Mat, power: f64, dst: Mat) void;
 //*    pub extern fn Mat_Phase(x: Mat, y: Mat, angle: Mat, angleInDegrees: bool) void;

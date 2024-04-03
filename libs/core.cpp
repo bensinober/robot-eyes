@@ -753,6 +753,15 @@ void Mat_Transpose(Mat src, Mat dst) {
     cv::transpose(*src, *dst);
 }
 
+void Mat_TransposeND(Mat src, struct IntVector order, Mat dst) {
+    std::vector<int> orders;
+
+    for (int i = 0; i < order.length; ++i) {
+        orders.push_back(order.val[i]);
+    }
+    cv::transposeND(*src, orders, *dst);
+}
+
 void Mat_PolarToCart(Mat magnitude, Mat degree, Mat x, Mat y, bool angleInDegrees) {
     cv::polarToCart(*magnitude, *degree, *x, *y, angleInDegrees);
 }

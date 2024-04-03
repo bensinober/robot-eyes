@@ -156,6 +156,13 @@ pub const Net = struct {
         return try initFromC(nn_ptr);
     }
 
+    pub fn readNetFromDarknet(cfg: []const u8, model: []const u8) !Self {
+        _ = try ensureFileExists(cfg, false);
+        _ = try ensureFileExists(model, false);
+        const nn_ptr = c.Net_ReadNetFromDarknet(@as([*]const u8, @ptrCast(cfg)), @as([*]const u8, @ptrCast(model)));
+        return try initFromC(nn_ptr);
+    }
+
     pub fn readNetFromCaffeBytes(prototxt: []u8, caffe_model: []u8) !Self {
         const c_prototxt = core.toByteArray(prototxt);
         const c_caffe_model = core.toByteArray(caffe_model);
@@ -163,9 +170,10 @@ pub const Net = struct {
         return try initFromC(nn_ptr);
     }
 
-    pub fn readNetFromTensorflow(model: []const u8) !Self {
+    pub fn readNetFromTensorflow(model: []const u8, pbtxt: []const u8) !Self {
+        _ = try ensureFileExists(pbtxt, false);
         _ = try ensureFileExists(model, false);
-        const nn_ptr = c.Net_ReadNetFromTensorflow(@as([*]const u8, @ptrCast(model)));
+        const nn_ptr = c.Net_ReadNetFromTensorflow(@as([*]const u8, @ptrCast(model)), @as([*]const u8, @ptrCast(pbtxt)));
         return try initFromC(nn_ptr);
     }
 

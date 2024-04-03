@@ -23,15 +23,14 @@ Net Net_ReadNet(const char* model, const char* config);
 Net Net_ReadNetBytes(const char* framework, struct ByteArray model, struct ByteArray config);
 Net Net_ReadNetFromCaffe(const char* prototxt, const char* caffeModel);
 Net Net_ReadNetFromCaffeBytes(struct ByteArray prototxt, struct ByteArray caffeModel);
-Net Net_ReadNetFromTensorflow(const char* model);
+Net Net_ReadNetFromDarknet(const char* cfg, const char* model);
+Net Net_ReadNetFromTensorflow(const char* model, const char* pbtxt);
 Net Net_ReadNetFromTensorflowBytes(struct ByteArray model);
 Net Net_ReadNetFromTorch(const char* model);
 Net Net_ReadNetFromONNX(const char* model);
 Net Net_ReadNetFromONNXBytes(struct ByteArray model);
-Mat Net_BlobFromImage(Mat image, double scalefactor, Size size, Scalar mean, bool swapRB,
-                      bool crop);
-void Net_BlobFromImages(struct Mats images, Mat blob,  double scalefactor, Size size, 
-                        Scalar mean, bool swapRB, bool crop, int ddepth);
+Mat Net_BlobFromImage(Mat image, double scalefactor, Size size, Scalar mean, bool swapRB, bool crop);
+void Net_BlobFromImages(struct Mats images, Mat blob,  double scalefactor, Size size, Scalar mean, bool swapRB, bool crop, int ddepth);
 void Net_ImagesFromBlob(Mat blob_, struct Mats* images_);
 void Net_Close(Net net);
 bool Net_Empty(Net net);
