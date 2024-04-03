@@ -372,6 +372,107 @@ pub const TrackerMIL = struct {
     }
 };
 
+/// the Nano tracker is a super lightweight ncnn-based general object tracking.
+/// Nano tracker is much faster and extremely lightweight due to special model structure, the whole model size is about 1.9 MB.
+/// Nano tracker needs two models: one for feature extraction (backbone) and the another for localization (neckhead).
+///
+/// For further details, please see:
+/// https://docs.opencv.org/4.x/d8/d69/classcv_1_1TrackerNano.html#details
+
+pub const TrackerNano = struct {
+    ptr: c.TrackerNano,
+
+    const Self = @This();
+    const UpdateReturn = struct { box: Rect, success: bool };
+
+    pub fn init() !c.TrackerNano {
+        var ptr = c.TrackerNano_Create();
+        const nn_ptr = try epnn(ptr);
+        return Self{ .ptr = nn_ptr };
+    }
+
+    pub fn deinit(self: *Self) void {
+        assert(self.ptr != null);
+        _ = c.TrackerNano_Close(self.ptr);
+        self.*.ptr = null;
+    }
+
+    pub fn initialize(self: *Self, img: Mat, bbox: Rect) bool {
+        return c.Tracker_Init(self.ptr, img.toC(), bbox.toC());
+    }
+
+    pub fn update(self: *Self, img: Mat) !void {
+        var c_box: c.Rect = undefined;
+        const success = c.TrackerNano_Update(self.ptr, img.toC(), @ptrCast(&c_box));
+        var rect = Rect.initFromC(c_box);
+        return UpdateReturn{
+            .box = rect,
+            .success = success,
+        };
+    }
+
+    pub fn tracker(self: *Self) !Tracker {
+        return try Tracker.init(self);
+    }
+};
+
+// the VIT tracker is a super lightweight dnn-based general object tracking.
+// VIT tracker is much faster and extremely lightweight due to special model structure, the model file is about 767KB.
+// params:
+//   net = "vitTracker.onnx";                    // cv.dnn.ReadNet
+//   meanvalue = Scalar{0.485, 0.456, 0.406};    // cv.Scalar
+//   stdvalue = Scalar{0.229, 0.224, 0.225};     // cv.Scalar
+//   backend = dnn::DNN_BACKEND_DEFAULT;         // cv.BackendType
+//   target = dnn::DNN_TARGET_CPU;               // cv.TargetType
+
+pub const TrackerVit = struct {
+    ptr: c.TrackerVit,
+    //rect: Rect,
+    //tracking: bool,
+
+    const Self = @This();
+    const UpdateReturn = struct { box: Rect, success: bool };
+
+    pub fn init(model: []const u8) !TrackerVit {
+        const c_model = @as([*]const u8, @ptrCast(model));
+        const backend = dnn.Net.BackendType.default;
+        const target = dnn.Net.TargetType.cpu;
+        const meanval = core.Scalar.init(0.485, 0.456, 0.406, 0.0).toC();
+        const stdval = core.Scalar.init(0.229, 0.224, 0.225, 0).toC();
+        var ptr = c.TrackerVit_CreateWithParams(c_model, @intFromEnum(backend), @intFromEnum(target), meanval, stdval);
+        const nn_ptr = try epnn(ptr);
+        return Self{ .ptr = nn_ptr };
+    }
+
+    pub fn deinit(self: *Self) void {
+        assert(self.ptr != null);
+        _ = c.TrackerVit_Close(self.ptr);
+        self.*.ptr = null;
+    }
+
+    pub fn initialize(self: *Self, img: *Mat, bbox: Rect) bool {
+        return c.Tracker_Init(self.ptr, img.*.ptr, bbox.toC());
+    }
+
+    pub fn update(self: *Self, img: *Mat) UpdateReturn {
+        var c_box: c.Rect = undefined;
+        const success = c.TrackerVit_Update(self.ptr, img.*.ptr, &c_box);
+        //const success = c.TrackerVit_Update(self.ptr, img.toC(), @ptrCast(&c_box));
+        var rect = Rect.initFromC(c_box);
+        return UpdateReturn{
+            .box = rect,
+            .success = success,
+        };
+    }
+
+    pub fn getTrackingScore(self: *Self) f32 {
+        const f: f32 = c.TrackerVit_GetTrackingScore(self.ptr);
+        return f;
+    }
+
+};
+
+
 const testing = std.testing;
 const imgcodecs = @import("imgcodecs.zig");
 const imgproc = @import("imgproc.zig");

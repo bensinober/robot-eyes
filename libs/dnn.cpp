@@ -114,6 +114,19 @@ void Net_GetUnconnectedOutLayers(Net net, IntVector* res) {
     return;
 }
 
+void Net_GetUnconnectedOutLayersNames(Net net, CStrings* names) {
+    std::vector< cv::String > cstrs(net->getUnconnectedOutLayersNames());
+    const char **strs = new const char*[cstrs.size()];
+
+    for (size_t i = 0; i < cstrs.size(); ++i) {
+        strs[i] = cstrs[i].c_str();
+    }
+
+    names->length = cstrs.size();
+    names->strs = strs;
+    return;
+}
+
 void Net_GetLayerNames(Net net, CStrings* names) {
     std::vector< cv::String > cstrs(net->getLayerNames());
     const char **strs = new const char*[cstrs.size()];

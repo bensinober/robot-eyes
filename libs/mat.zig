@@ -1376,9 +1376,9 @@ pub fn sum(self: Self) Scalar {
 // For further details, please see:
 // https://docs.opencv.org/master/d3/d63/classcv_1_1Mat.html#aa6542193430356ad631a9beabc624107
 //
-pub fn rowRange(self: Self, startrow: i32, endrow: i32) Self {
+pub fn rowRange(self: Self, startrow: i32, endrow: i32) !Self {
     const ptr = c.Mat_rowRange(self.ptr, startrow, endrow);
-    return initFromC(ptr);
+    return try initFromC(ptr);
 }
 
 // ColRange creates a matrix header for the specified column span.
@@ -1386,9 +1386,9 @@ pub fn rowRange(self: Self, startrow: i32, endrow: i32) Self {
 // For further details, please see:
 // https://docs.opencv.org/master/d3/d63/classcv_1_1Mat.html#aadc8f9210fe4dec50513746c246fa8d9
 //
-pub fn colRange(self: Self, startcol: i32, endcol: i32) Self {
+pub fn colRange(self: Self, startcol: i32, endcol: i32) !Self {
     const ptr = c.Mat_colRange(self.ptr, startcol, endcol);
-    return initFromC(ptr);
+    return try initFromC(ptr);
 }
 
 // PatchNaNs converts NaN's to zeros.

@@ -52,6 +52,7 @@ double FindTransformECC(Mat templateImage, Mat inputImage, Mat warpMatrix, int m
 
 bool Tracker_Init(Tracker self, Mat image, Rect boundingBox);
 bool Tracker_Update(Tracker self, Mat image, Rect* boundingBox);
+float Tracker_GetTrackingScore(Tracker self);
 
 TrackerMIL TrackerMIL_Create();
 void TrackerMIL_Close(TrackerMIL self);

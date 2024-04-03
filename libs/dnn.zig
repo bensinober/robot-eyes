@@ -278,6 +278,32 @@ pub const Net = struct {
         return return_res;
     }
 
+    // Returns names of layers with unconnected outputs.
+    // FIXIT: Rework API to registerOutput() approach, deprecate this call
+    // https://docs.opencv.org/4.x/db/d30/classcv_1_1dnn_1_1Net.html#ac1840896b8643f91532e98c660627fb9
+    pub fn getUnconnectedOutLayersNames(self: Self, allocator: std.mem.Allocator) ![][]const u8 {
+        var c_strs: c.CStrings = undefined;
+        //defer c.CStrings_Close(c_strs);
+        c.Net_GetUnconnectedOutLayersNames(self.ptr, &c_strs);
+        const len = @as(usize, @intCast(c_strs.length));
+        var return_strings = try allocator.alloc([]const u8, len);
+
+        for (return_strings, 0..) |*item, i| {
+            item.* = try allocator.dupe(u8, std.mem.span(c_strs.strs[i]));
+        }
+        // for (return_strings.items, 0..) |_, i| {
+        //     const layerName = std.mem.span(c_strs.strs[i]);
+        //     std.debug.print("Layer name {any}\n", .{layerName});
+        //     return_strings.items[i] = try allocator.dupe(u8, layerName);
+        // }
+        // var i: usize = 0;
+        // while (i < c_strs.length) : (i += 1) {
+        //     const str = std.mem.sliceTo(c_strs.strs[i], 0);
+        //     try return_strings.append(str);
+        // }
+        return return_strings;
+    }
+
     // Get list of layer names used. Returns array of strings
     // https://docs.opencv.org/4.8.0/db/d30/classcv_1_1dnn_1_1Net.html#ae62a73984f62c49fd3e8e689405b056a
     pub fn getLayerNames(self: Self, allocator: std.mem.Allocator) ![][]const u8 {
@@ -562,6 +588,7 @@ pub fn nmsBoxesWithParams(
 //*    pub extern fn Net_SetPreferableTarget(net: Net, target: c_int) void;
 //*    pub extern fn Net_GetPerfProfile(net: Net) i64;
 //*    pub extern fn Net_GetUnconnectedOutLayers(net: Net, res: [*c]IntVector) void;
+//*    pub extern fn Net_GetUnconnectedOutLayersNames(net: Net, names: [*c]CStrings) void;
 //*    pub extern fn Net_GetLayerNames(net: Net, names: [*c]CStrings) void;
 //*    pub extern fn Net_GetBlobChannel(blob: Mat, imgidx: c_int, chnidx: c_int) Mat;
 //*    pub extern fn Net_GetBlobSize(blob: Mat) Scalar;
