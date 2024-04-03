@@ -1,0 +1,19 @@
+#robot-eyes.service
+[Unit]
+Description=Start robot-eyes app
+After=robot-eyes-bunjs.service
+
+[Service]
+WorkingDirectory=/home/plasma/robot-eyes
+User=plasma
+Group=plasma
+Restart=always
+#ExecStart=/home/plasma/robot-eyes/zig-out/bin/robot-eyes 0 models/MobileNetSSD_deploy.caffemodel
+ExecStart=/home/plasma/robot-eyes/zig-out/bin/robot-eyes 0 models/yolo-fastest-1.1.weights
+Environment=DISPLAY=:0
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
+Environment=OPENCV_DNN_OPENCL_ALLOW_ALL_DEVICES=1
+
+
+[Install]
+WantedBy=multi-user.target

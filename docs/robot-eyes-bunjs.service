@@ -1,0 +1,13 @@
+#robot-eyes-bunjs.service
+[Unit]
+Description=Start robot-eyes bun server
+
+[Service]
+WorkingDirectory=/home/plasma/robot-eyes
+User=plasma
+Group=plasma
+Restart=always
+ExecStart=/home/plasma/.bun/bin/bun run server.js
+
+[Install]
+WantedBy=multi-user.target
