@@ -1,6 +1,10 @@
 // Bun server with websocket and static file serving
 const BASE_PATH = "./www"
 var pendingBuffer,pendingCmd, pendingSize, pendingMode
+//const bluetooth = require("webbluetooth").bluetooth
+//import { bindings } from "simpleble"
+
+var eyesActive = false
 
 const httpServer = Bun.serve({
   port: 8665,
@@ -65,14 +69,14 @@ const httpServer = Bun.serve({
   },
   websocket: {
     message(ws, data) {
-      ws.publish("shell-game", data)
+      ws.publish("robot-eyes", data)
     },
     open(ws) {
       console.log(`opened websocket type ${ws.binaryType} for channels ${ws.data.channels}`)
       for (const c of ws.data.channels) {
         ws.subscribe(c)
       }
-      ws.data.sessionId = "shell-game-MCC"
+      ws.data.sessionId = "robot-eyes-MCC"
     }, // a socket is opened
     close(ws, code, message) {}, // a socket is closed
     drain(ws) {}, // the socket is ready to receive more data
@@ -82,3 +86,4 @@ const httpServer = Bun.serve({
   },
 })
 console.log(`Bun http Server listening on ${httpServer.hostname}:${httpServer.port}`)
+
