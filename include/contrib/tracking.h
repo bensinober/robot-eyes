@@ -14,10 +14,12 @@ extern "C" {
 typedef cv::Ptr<cv::Tracker>* Tracker;
 typedef cv::Ptr<cv::TrackerKCF>* TrackerKCF;
 typedef cv::Ptr<cv::TrackerCSRT>* TrackerCSRT;
+
 #else
 typedef void* Tracker;
 typedef void* TrackerKCF;
 typedef void* TrackerCSRT;
+typedef void* TrackerNano;
 #endif
 
 bool TrackerSubclass_Init(Tracker self, Mat image, Rect boundingBox);
@@ -28,7 +30,6 @@ void TrackerKCF_Close(TrackerKCF self);
 
 TrackerCSRT TrackerCSRT_Create();
 void TrackerCSRT_Close(TrackerCSRT self);
-
 
 #ifdef __cplusplus
 }

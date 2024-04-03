@@ -2,6 +2,7 @@ const std = @import("std");
 const c = @import("c_api.zig");
 const core = @import("core.zig");
 const utils = @import("utils.zig");
+const dnn = @import("dnn.zig");
 const assert = std.debug.assert;
 const epnn = utils.ensurePtrNotNull;
 const Mat = core.Mat;
@@ -651,3 +652,7 @@ test "video tracker MIL" {
 //*    pub extern fn Tracker_Update(self: Tracker, image: Mat, boundingBox: [*c]Rect) bool;
 //*    pub extern fn TrackerMIL_Create(...) TrackerMIL;
 //*    pub extern fn TrackerMIL_Close(self: TrackerMIL) void;
+//*    pub extern fn TrackerNano_Create(...) TrackerNano;
+//*    pub extern fn TrackerNano_Close(self: TrackerNano) void;
+//*    pub extern fn TrackerVit_Create(...) TrackerVit;
+//*    pub extern fn TrackerVit_Close(self: TrackerVit) void;

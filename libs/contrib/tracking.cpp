@@ -1,7 +1,6 @@
 #include "tracking.h"
 #include <opencv2/opencv.hpp>
 
-
 bool TrackerSubclass_Init(Tracker self, Mat image, Rect boundingBox) {
     cv::Rect bb(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height);
 

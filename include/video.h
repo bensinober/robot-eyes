@@ -15,7 +15,11 @@ typedef cv::Ptr<cv::BackgroundSubtractorKNN>* BackgroundSubtractorKNN;
 typedef cv::Ptr<cv::Tracker>* Tracker;
 typedef cv::Ptr<cv::TrackerMIL>* TrackerMIL;
 typedef cv::Ptr<cv::TrackerGOTURN>* TrackerGOTURN;
+typedef cv::Ptr<cv::TrackerNano>* TrackerNano;
+typedef cv::Ptr<cv::TrackerVit>* TrackerVit;
+
 typedef cv::KalmanFilter* KalmanFilter;
+typedef cv::TrackerVit::Params* TrackerVit_Params;
 #else
 typedef void* BackgroundSubtractorMOG2;
 typedef void* BackgroundSubtractorKNN;
@@ -23,6 +27,9 @@ typedef void* Tracker;
 typedef void* TrackerMIL;
 typedef void* TrackerGOTURN;
 typedef void* KalmanFilter;
+typedef void* TrackerNano;
+typedef void* TrackerVit;
+typedef void* TrackerVit_Params;
 #endif
 
 BackgroundSubtractorMOG2 BackgroundSubtractorMOG2_Create();
@@ -85,6 +92,18 @@ void KalmanFilter_SetMeasurementNoiseCov(KalmanFilter kf, Mat measurementNoiseCo
 void KalmanFilter_SetErrorCovPre(KalmanFilter kf, Mat errorCovPre);
 void KalmanFilter_SetGain(KalmanFilter kf, Mat gain);
 void KalmanFilter_SetErrorCovPost(KalmanFilter kf, Mat errorCovPost);
+
+// https://github.com/HonglinChu/SiamTrackers/tree/master/NanoTrack/models/nanotrackv2
+TrackerNano TrackerNano_Create();
+void TrackerNano_Close(TrackerNano self);
+
+// https://github.com/opencv/opencv_zoo/tree/main/models/object_tracking_vittrack
+TrackerVit TrackerVit_Create();
+TrackerVit TrackerVit_CreateWithParams(const char* model, int backend, int target, Scalar meanvalue, Scalar stdvalue);
+void TrackerVit_Close(TrackerVit self);
+bool TrackerVit_init(TrackerVit self, Mat image, Rect boundingBox);
+bool TrackerVit_Update(TrackerVit self, Mat image, Rect* boundingBox);
+float TrackerVit_GetTrackingScore(TrackerVit self);
 
 #ifdef __cplusplus
 }

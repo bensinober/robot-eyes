@@ -207,3 +207,68 @@ void KalmanFilter_SetGain(KalmanFilter kf, Mat gain) {
 void KalmanFilter_SetErrorCovPost(KalmanFilter kf, Mat errorCovPost) {
   kf->errorCovPost = *errorCovPost;
 }
+
+TrackerNano TrackerNano_Create() {
+    return new cv::Ptr<cv::TrackerNano>(cv::TrackerNano::create());
+}
+
+void TrackerNano_Close(TrackerNano self) {
+    delete self;
+}
+
+// TrackerVit
+//CV_PROP_RW std::string net; // default: "vitTracker.onnx"
+//CV_PROP_RW int backend;     // default: 0 (auto)
+//CV_PROP_RW int target;      // default: 0 (cpu)
+//CV_PROP_RW Scalar meanvalue;
+//CV_PROP_RW Scalar stdvalue;*/
+
+TrackerVit_Params TrackerVitParams_New(const char* model) {
+    cv::TrackerVit::Params params = cv::TrackerVit::Params();
+    params.net = model;
+
+    TrackerVit_Params c_params = TrackerVit_Params();
+    c_params->net = params.net;
+    return c_params;
+}
+
+TrackerVit TrackerVit_Create() {
+    return new cv::Ptr<cv::TrackerVit>(cv::TrackerVit::create());
+}
+
+TrackerVit TrackerVit_CreateWithParams(const char* model, int backend, int target, Scalar meanvalue, Scalar stdvalues) {
+    cv::TrackerVit::Params params = cv::TrackerVit::Params();
+    params.net = model;
+    params.backend = backend;
+    params.target = target;
+    // ignore meanvalue and stdvalue
+    // params.meanvalue = meanvalue;
+    // params.stdvalue = stdvalue;
+    return new cv::Ptr<cv::TrackerVit>(cv::TrackerVit::create(params));
+}
+
+void TrackerVit_Close(TrackerVit self) {
+    delete self;
+}
+
+bool TrackerVit_Init(TrackerVit self, Mat image, Rect boundingBox) {
+    cv::Rect bb(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height);
+
+    (*self)->init(*image, bb);
+    return true;
+}
+
+bool TrackerVit_Update(TrackerVit self, Mat image, Rect* boundingBox) {
+    cv::Rect bb;
+    bool ret = (*self)->update(*image, bb);
+    boundingBox->x = int(bb.x);
+    boundingBox->y = int(bb.y);
+    boundingBox->width = int(bb.width);
+    boundingBox->height = int(bb.height);
+    return ret;
+}
+
+float TrackerVit_GetTrackingScore(TrackerVit self) {
+    float score = (*self)->getTrackingScore();
+    return score;
+}
