@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ROBOT EYES TEST CANVAS</title>
+    <link href="https://fonts.cdnfonts.com/css/blade-runner-movie-font" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Orbitron" rel="stylesheet">
+    <style>
+      .container {
+        position: relative;
+        margin: auto;
+        overflow: hidden;
+        width: 640px;
+        height: 640px;
+        padding: 20px;
+      }
+      #title { font-family: 'Blade Runner Movie Font', sans-serif; text-align: center; height: 5rem; font-size: 62px;}
+    </style>
+</head>
+
+<body>
+  <div id="title">robot eyes test canvas</div>
+  <div class="container">
+    <button id="connectBtn">Koble</button>
+    <div class="centroid">150,150</div>
+    <canvas id="robotEyesCanvas" width="640" height="640"></canvas>
+  </div>
+  <script type="module" type= "application/javascript">
+    import { writeToEyes, connectToEyes } from "./assets/script.js"
+
+    document.addEventListener("DOMContentLoaded", function(){
+
+      document.getElementById("connectBtn").addEventListener("click", async(evt) => {
+        // connect to eyes
+        if ("bluetooth" in navigator) {
+          try {
+            //Device A4:06:E9:8E:00:0A HMSoft
+            // HMSoft uU8ptu87vOOkd/NIwmqtDg== false
+            //console.log("here")
+            await connectToEyes()
+          } catch(err) {
+            console.log(err)
+          }
+        } else {
+          console.log("you need to activate web bluetooth api in browser!")
+        }
+      })
+
+      // test.js for calibrating eyes
+      const testCanvas = document.querySelector("#robotEyesCanvas")
+      var ctxTestCanvas = testCanvas.getContext("2d")
+
+      ctxTestCanvas.fillStyle = "rgb(12,50,10, 0.2)"
+      ctxTestCanvas.fillRect(0, 0, testCanvas.width, testCanvas.height)
+
+      testCanvas.addEventListener("mousedown", function(e) {
+          getCursorPosition(testCanvas, e)
+      })
+
+      // TEST CANVAS FOR ROBOT EYES
+      function getCursorPosition(canvas, event) {
+        const rect = canvas.getBoundingClientRect()
+        const x = Math.floor(event.clientX - rect.left)
+        const y = Math.floor(event.clientY - rect.top)
+        console.log("x: " + x + " y: " + y)
+        const centroidDiv = document.querySelector(".centroid")
+        centroidDiv.innerHTML = `${x},${y}`
+        writeToEyes(x, y)
+      }
+
+    })
+  </script>
+</body>
+
+</html>
+
