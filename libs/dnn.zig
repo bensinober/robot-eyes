@@ -286,7 +286,7 @@ pub const Net = struct {
         //defer c.CStrings_Close(c_strs);
         c.Net_GetUnconnectedOutLayersNames(self.ptr, &c_strs);
         const len = @as(usize, @intCast(c_strs.length));
-        var return_strings = try allocator.alloc([]const u8, len);
+        const return_strings = try allocator.alloc([]const u8, len);
 
         for (return_strings, 0..) |*item, i| {
             item.* = try allocator.dupe(u8, std.mem.span(c_strs.strs[i]));
@@ -311,7 +311,7 @@ pub const Net = struct {
         //defer c.CStrings_Close(c_strs);
         c.Net_GetLayerNames(self.ptr, &c_strs);
         const len = @as(usize, @intCast(c_strs.length));
-        var return_strings = try allocator.alloc([]const u8, len);
+        const return_strings = try allocator.alloc([]const u8, len);
 
         for (return_strings, 0..) |*item, i| {
             item.* = try allocator.dupe(u8, std.mem.span(c_strs.strs[i]));
@@ -362,7 +362,7 @@ pub const Blob = struct {
             swap_rb,
             crop,
         );
-        var new_blob_mat = try Mat.initFromC(new_c_blob);
+        const new_blob_mat = try Mat.initFromC(new_c_blob);
         return try initFromMat(new_blob_mat);
     }
 
@@ -383,7 +383,7 @@ pub const Blob = struct {
         ddepth: Mat.MatType,
     ) !Self {
         var new_blob_mat = try Mat.init();
-        var c_mats = try Mat.toCStructs(images);
+        const c_mats = try Mat.toCStructs(images);
         c.Net_BlobFromImages(
             c_mats,
             new_blob_mat.toC(),
@@ -484,7 +484,7 @@ pub fn nmsBoxes(
         .length = @as(i32, @intCast(bboxes.len)),
     };
 
-    var c_scores_struct = c.FloatVector{
+    const c_scores_struct = c.FloatVector{
         .val = @as([*]f32, @ptrCast(scores.ptr)),
         .length = @as(i32, @intCast(scores.len)),
     };

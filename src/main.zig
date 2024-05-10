@@ -39,15 +39,14 @@ const red = cv.Color{ .r = 255 };
 // };
 // piconet coco 80 classes
 var CLASSES = [_][]const u8{
-    "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light",
-    "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow",
-    "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee",
-    "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard",
-    "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple",
-    "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch",
-    "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone",
-    "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear",
-    "hair drier", "toothbrush",
+    "person",       "bicycle",   "car",           "motorcycle", "airplane",     "bus",            "train",      "truck",      "boat",          "traffic light",
+    "fire hydrant", "stop sign", "parking meter", "bench",      "bird",         "cat",            "dog",        "horse",      "sheep",         "cow",
+    "elephant",     "bear",      "zebra",         "giraffe",    "backpack",     "umbrella",       "handbag",    "tie",        "suitcase",      "frisbee",
+    "skis",         "snowboard", "sports ball",   "kite",       "baseball bat", "baseball glove", "skateboard", "surfboard",  "tennis racket", "bottle",
+    "wine glass",   "cup",       "fork",          "knife",      "spoon",        "bowl",           "banana",     "apple",      "sandwich",      "orange",
+    "broccoli",     "carrot",    "hot dog",       "pizza",      "donut",        "cake",           "chair",      "couch",      "potted plant",  "bed",
+    "dining table", "toilet",    "tv",            "laptop",     "mouse",        "remote",         "keyboard",   "cell phone", "microwave",     "oven",
+    "toaster",      "sink",      "refrigerator",  "book",       "clock",        "vase",           "scissors",   "teddy bear", "hair drier",    "toothbrush",
 };
 
 // GameMode is modified by timer and external Socket commands
@@ -72,9 +71,9 @@ pub const GameMode = enum(u8) {
 var gameMode = GameMode.IDLE;
 var lastGameMode = GameMode.IDLE;
 var trackerVit: cv.TrackerVit = undefined;
-const initialCenterPoint = cv.Point{.x=160, .y=160};
+const initialCenterPoint = cv.Point{ .x = 160, .y = 160 };
 
-var wsClient: websocket.Client = undefined;     // Websocket client
+var wsClient: websocket.Client = undefined; // Websocket client
 //var client: std.net.Stream = undefined;       // TCP client for sending tracking / predictions / messages
 //var httpClient: std.http.Client = undefined;  // HTTP client for sending images
 //var server: std.net.StreamServer = undefined; // listening TCP socket for receiving commands from client
@@ -89,25 +88,24 @@ const MsgHandler = struct {
             const mode: GameMode = @enumFromInt(msg.data[1]);
             lastGameMode = gameMode;
             gameMode = mode;
-            var mb: u8 = std.mem.asBytes(&gameMode)[0];
-            std.log.debug("switched mode from: {any} to {any}", .{lastGameMode, gameMode});
+            const mb: u8 = std.mem.asBytes(&gameMode)[0];
+            std.log.debug("switched mode from: {any} to {any}", .{ lastGameMode, gameMode });
             const res = try self.allocator.alloc(u8, 8);
-            @memcpy(res, &[_]u8{0, mb, 2, 0, 0, 0, 0x4f, 0x4b}); // OK
+            @memcpy(res, &[_]u8{ 0, mb, 2, 0, 0, 0, 0x4f, 0x4b }); // OK
             _ = try wsClient.writeBin(res);
         } else {
             const res = try self.allocator.alloc(u8, 9);
-            var mb: u8 = std.mem.asBytes(&gameMode)[0];
-            @memcpy(res, &[_]u8{0, mb, 2, 0, 0, 0, 0x4e, 0x4f, 0x4b}); // NOK
+            const mb: u8 = std.mem.asBytes(&gameMode)[0];
+            @memcpy(res, &[_]u8{ 0, mb, 2, 0, 0, 0, 0x4e, 0x4f, 0x4b }); // NOK
             _ = try wsClient.write(res);
         }
     }
-    pub fn close(_: MsgHandler) void {
-    }
+    pub fn close(_: MsgHandler) void {}
 };
 
 // Result is a rect object containing scores and a class
 const Result = struct {
-    id: usize,  // the result score id
+    id: usize, // the result score id
     box: cv.Rect,
     centre: cv.Point,
     prevCentre: cv.Point,
@@ -126,27 +124,27 @@ pub const Error = error{MissingFocus};
 const Tracker = struct {
     const Self = @This();
     allocator: Allocator,
-    maxLife: i32,                 // num of frames to keep disappeared objects before removing them
-    objects: ArrayList(Result),   // box, centroid (x, y), scores etc.
-    disappeared: ArrayList(i32),  // counter(s) for measuring disappearance
-    focusId: usize,               // The ID of Result struct containing ball - our main focus
-    lastFocusObj: ?Result,        // The Result struct of LAST KNOWN GOOD focus - failover even if lost/disappeared
-    fpsTimer: std.time.Timer,     // FPS timer
-    overlay: Mat,                 // empty mat to draw movements on
+    maxLife: i32, // num of frames to keep disappeared objects before removing them
+    objects: ArrayList(Result), // box, centroid (x, y), scores etc.
+    disappeared: ArrayList(i32), // counter(s) for measuring disappearance
+    focusId: usize, // The ID of Result struct containing ball - our main focus
+    lastFocusObj: ?Result, // The Result struct of LAST KNOWN GOOD focus - failover even if lost/disappeared
+    fpsTimer: std.time.Timer, // FPS timer
+    overlay: Mat, // empty mat to draw movements on
     frames: f64,
     fps: f64,
     tracking: bool,
     trackingDisappeared: i32,
     trackingIdleTimer: std.time.Timer, // tracker timer for detecting stale objects
-    trackingPrevCentroid: cv.Point,    // previous trackerVit centroid
+    trackingPrevCentroid: cv.Point, // previous trackerVit centroid
 
     pub fn init(allocator: Allocator) !Self {
-        var objs: ArrayList(Result) = ArrayList(Result).init(allocator);
-        var disapp: ArrayList(i32) = ArrayList(i32).init(allocator);
-        var overlay = try cv.Mat.initOnes( 320, 320, cv.Mat.MatType.cv8uc4); // CV_8UC4 for transparency
-        var fpsTimer = try std.time.Timer.start();
-        var idleTimer = try std.time.Timer.start();
-        var lastFocusObj = Result{ .id = 0, .box = undefined, .centre = initialCenterPoint, .prevCentre = initialCenterPoint, .score=0, .classId=0};
+        const objs: ArrayList(Result) = ArrayList(Result).init(allocator);
+        const disapp: ArrayList(i32) = ArrayList(i32).init(allocator);
+        const overlay = try cv.Mat.initOnes(320, 320, cv.Mat.MatType.cv8uc4); // CV_8UC4 for transparency
+        const fpsTimer = try std.time.Timer.start();
+        const idleTimer = try std.time.Timer.start();
+        const lastFocusObj = Result{ .id = 0, .box = undefined, .centre = initialCenterPoint, .prevCentre = initialCenterPoint, .score = 0, .classId = 0 };
         return Self{
             .maxLife = 30, // number of frames to allow tracking to wait before resetting focus
             .allocator = allocator,
@@ -215,7 +213,7 @@ const Tracker = struct {
             }
         }
         // failover object if lost focus
-        if (self.lastFocusObj) | obj| {
+        if (self.lastFocusObj) |obj| {
             // dont send last known object forever
             if (obj.disappeared < self.maxLife) {
                 //std.debug.print("getFocusObj : LOST OBJECT, TRYING LAST KNOWN FOCUS ID {d}!\n", .{obj.id});
@@ -267,21 +265,21 @@ const Tracker = struct {
     // we need to map input vector x,y (640, 480) to u8 bytes (255, 255)
     // send as 5 u8 bytes { 0, 2, x, y, CRLF }, not expecting any response
     fn sendCentroidToEyes(_: Self, p: cv.core.Point) !void {
-      // x, y is only two u8 bytes + 0, 2
-      const x1: f32 = @floatFromInt(p.x);
-      const y1: f32 = @floatFromInt(p.y);
-      const x2: f32 = std.math.round(x1 / 640.0 * 255.0); // map 0-640 to 0-255
-      const y2: f32 = std.math.round(@fabs(640.0 - y1) / 640.0 * 255.0); // map to 0-255 and invert
-      std.debug.print("Sending x, y: ({d}, {d}) mapped: ({d:.0}, {d:.0}) to eyes\n", .{p.x, p.y, x2, y2});
-      const xByte: u8 = @truncate(@as(u32, @bitCast(@as(i32, @intFromFloat(x2)))));
-      const yByte: u8 = @truncate(@as(u32, @bitCast(@as(i32, @intFromFloat(y2)))));
-      var cmd: [5]u8 = .{0, 2, xByte, yByte, 13};
-      //std.debug.print("Sending x, y: ({d}, {d}) to eyes: {any} \n", .{x2, y2, cmd});
-      const cmd_c: [*c]const u8 = @ptrCast(&cmd);
-      var err_code = ble.simpleble_peripheral_write_request(btPeripheral, btService.uuid, btService.characteristics[0].uuid, cmd_c, 5);
-      if (err_code != @as(c_uint, @bitCast(ble.SIMPLEBLE_SUCCESS))) {
-        std.debug.print("Failed to send data to eyes.\n", .{});
-      }
+        // x, y is only two u8 bytes + 0, 2
+        const x1: f32 = @floatFromInt(p.x);
+        const y1: f32 = @floatFromInt(p.y);
+        const x2: f32 = std.math.round(x1 / 640.0 * 255.0); // map 0-640 to 0-255
+        const y2: f32 = std.math.round(@abs(640.0 - y1) / 640.0 * 255.0); // map to 0-255 and invert
+        std.debug.print("Sending x, y: ({d}, {d}) mapped: ({d:.0}, {d:.0}) to eyes\n", .{ p.x, p.y, x2, y2 });
+        const xByte: u8 = @truncate(@as(u32, @bitCast(@as(i32, @intFromFloat(x2)))));
+        const yByte: u8 = @truncate(@as(u32, @bitCast(@as(i32, @intFromFloat(y2)))));
+        var cmd: [5]u8 = .{ 0, 2, xByte, yByte, 13 };
+        //std.debug.print("Sending x, y: ({d}, {d}) to eyes: {any} \n", .{x2, y2, cmd});
+        const cmd_c: [*c]const u8 = @ptrCast(&cmd);
+        const err_code = ble.simpleble_peripheral_write_request(btPeripheral, btService.uuid, btService.characteristics[0].uuid, cmd_c, 5);
+        if (err_code != @as(c_uint, @bitCast(ble.SIMPLEBLE_SUCCESS))) {
+            std.debug.print("Failed to send data to eyes.\n", .{});
+        }
     }
 
     // send stats to websocket
@@ -309,7 +307,7 @@ const Tracker = struct {
     // Clear all result objects from tracker, in reverse since it mutates arraylist length
     fn clearObjects(self: *Self) !void {
         var i: usize = self.objects.items.len;
-        while (i > 0) : ( i -= 1 ) {
+        while (i > 0) : (i -= 1) {
             std.debug.print("Obj length: {d}.\n", .{self.objects.items.len});
             try self.unregister(i);
         }
@@ -359,15 +357,15 @@ fn performDetection(img: *Mat, scoreMat: Mat, rows: usize, _: Size, tracker: *Tr
         const sc = cv.Mat.minMaxLoc(classScores);
         if (sc.max_val > 0.30) {
             // std.debug.print("minMaxLoc: {any}\n", .{sc});
-            var fx: f32 = scoreMat.get(f32, i, 0);
-            var fy: f32 = scoreMat.get(f32, i, 1);
-            var fw: f32 = scoreMat.get(f32, i, 2);
-            var fh: f32 = scoreMat.get(f32, i, 3);
+            const fx: f32 = scoreMat.get(f32, i, 0);
+            const fy: f32 = scoreMat.get(f32, i, 1);
+            const fw: f32 = scoreMat.get(f32, i, 2);
+            const fh: f32 = scoreMat.get(f32, i, 3);
             //std.debug.print("imgW {d} imgH {d} fx {d}, fy {d}, fw {d}, fh {d}\n", .{imgWidth, imgHeight, fx, fy, fw, fh});
-            var left: i32 = @intFromFloat((fx - (fw / 2)) * imgWidth);
-            var top: i32 = @intFromFloat((fy - (fh / 2)) * imgHeight);
-            var width: i32 = @intFromFloat(fw * imgWidth);
-            var height: i32 = @intFromFloat(fh * imgHeight);
+            const left: i32 = @intFromFloat((fx - (fw / 2)) * imgWidth);
+            const top: i32 = @intFromFloat((fy - (fh / 2)) * imgHeight);
+            const width: i32 = @intFromFloat(fw * imgWidth);
+            const height: i32 = @intFromFloat(fh * imgHeight);
             const rect = cv.Rect{ .x = left, .y = top, .width = width, .height = height };
             const cx: i32 = @intFromFloat(fx * imgWidth);
             const cy: i32 = @intFromFloat(fy * imgHeight);
@@ -511,7 +509,6 @@ fn performDetection(img: *Mat, scoreMat: Mat, rows: usize, _: Size, tracker: *Tr
     // 4) update tracker objects with cleaned results
     try tracker.add(reduced);
 
-
     // Sort objects by largest box size
     //var objects = try tracker.objects.toOwnedSlice();
     //const objects = tracker.objects.items;
@@ -551,11 +548,11 @@ fn performDetection(img: *Mat, scoreMat: Mat, rows: usize, _: Size, tracker: *Tr
 
     // Add FPS and gameMode to output
     var fpsBuf = [_]u8{undefined} ** 20;
-    const fpsTxt = try std.fmt.bufPrint(&fpsBuf, "FPS ({d:.2})", .{ tracker.fps });
-    cv.putText(img, fpsTxt, cv.Point.init(10,30), cv.HersheyFont{ .type = .simplex }, 0.5, green, 2);
+    const fpsTxt = try std.fmt.bufPrint(&fpsBuf, "FPS ({d:.2})", .{tracker.fps});
+    cv.putText(img, fpsTxt, cv.Point.init(10, 30), cv.HersheyFont{ .type = .simplex }, 0.5, green, 2);
     var modeBuf = [_]u8{undefined} ** 14;
-    const modeTxt = try std.fmt.bufPrint(&modeBuf, "{s}", .{ @tagName(gameMode) });
-    cv.putText(img, modeTxt, cv.Point.init(10,620), cv.HersheyFont{ .type = .simplex }, 0.5, green, 2);
+    const modeTxt = try std.fmt.bufPrint(&modeBuf, "{s}", .{@tagName(gameMode)});
+    cv.putText(img, modeTxt, cv.Point.init(10, 620), cv.HersheyFont{ .type = .simplex }, 0.5, green, 2);
 }
 
 // We need square for onnx inferencing to work
@@ -569,12 +566,12 @@ pub fn formatToSquare(src: Mat) !Mat {
 }
 
 pub fn connectBluetooth() void {
-    var adapter_count: usize = ble.simpleble_adapter_get_count();
+    const adapter_count: usize = ble.simpleble_adapter_get_count();
     if (adapter_count == @as(usize, @bitCast(@as(c_long, @as(c_int, 0))))) {
         std.debug.print("No adapter was found.\n", .{});
         return;
     }
-    var adapter: ble.simpleble_adapter_t = ble.simpleble_adapter_get_handle(@as(usize, @bitCast(@as(c_long, @as(c_int, 0)))));
+    const adapter: ble.simpleble_adapter_t = ble.simpleble_adapter_get_handle(@as(usize, @bitCast(@as(c_long, @as(c_int, 0)))));
     if (adapter == @as(?*anyopaque, @ptrFromInt(@as(c_int, 0)))) {
         std.debug.print("No adapter was found.\n", .{});
         return;
@@ -587,18 +584,18 @@ pub fn connectBluetooth() void {
 
     var selection: usize = undefined;
     {
-      var i: usize = 0;
-      while (i < ble.peripheral_list_len) : (i +%= 1) {
-        var peripheral: ble.simpleble_peripheral_t = ble.peripheral_list[i];
-        //var peripheral_identifier: [*c]u8 = ble.simpleble_peripheral_identifier(peripheral);
-        var peripheral_address: [*c]u8 = ble.simpleble_peripheral_address(peripheral);
-        var periphStr = std.mem.span(@as([*:0]u8, @ptrCast(@alignCast(peripheral_address))));
-        std.debug.print("comp peripheral: {s} vs {s}\n", .{periphStr, btPeriphStr});
-        if (std.mem.eql(u8, periphStr, btPeriphStr)) {
-          selection = i;
-          break;
+        var i: usize = 0;
+        while (i < ble.peripheral_list_len) : (i +%= 1) {
+            const peripheral: ble.simpleble_peripheral_t = ble.peripheral_list[i];
+            //var peripheral_identifier: [*c]u8 = ble.simpleble_peripheral_identifier(peripheral);
+            const peripheral_address: [*c]u8 = ble.simpleble_peripheral_address(peripheral);
+            const periphStr = std.mem.span(@as([*:0]u8, @ptrCast(@alignCast(peripheral_address))));
+            std.debug.print("comp peripheral: {s} vs {s}\n", .{ periphStr, btPeriphStr });
+            if (std.mem.eql(u8, periphStr, btPeriphStr)) {
+                selection = i;
+                break;
+            }
         }
-      }
     }
 
     std.debug.print("Selected: {d}\n", .{selection});
@@ -607,9 +604,9 @@ pub fn connectBluetooth() void {
         return;
     }
     btPeripheral = ble.peripheral_list[@as(c_uint, @intCast(selection))];
-    var peripheral_identifier: [*c]u8 = ble.simpleble_peripheral_identifier(btPeripheral);
-    var peripheral_address: [*c]u8 = ble.simpleble_peripheral_address(btPeripheral);
-    std.debug.print("Connecting to {s} [{s}]\n", .{peripheral_identifier, peripheral_address});
+    const peripheral_identifier: [*c]u8 = ble.simpleble_peripheral_identifier(btPeripheral);
+    const peripheral_address: [*c]u8 = ble.simpleble_peripheral_address(btPeripheral);
+    std.debug.print("Connecting to {s} [{s}]\n", .{ peripheral_identifier, peripheral_address });
     ble.simpleble_free(@as(?*anyopaque, @ptrCast(peripheral_identifier)));
     ble.simpleble_free(@as(?*anyopaque, @ptrCast(peripheral_address)));
     var err_code = ble.simpleble_peripheral_connect(btPeripheral);
@@ -620,7 +617,7 @@ pub fn connectBluetooth() void {
     }
 
     // Service
-    var services_count: usize = ble.simpleble_peripheral_services_count(btPeripheral);
+    const services_count: usize = ble.simpleble_peripheral_services_count(btPeripheral);
     {
         var i: usize = 0;
         while (i < services_count) : (i +%= 1) {
@@ -634,11 +631,11 @@ pub fn connectBluetooth() void {
 
             // Select HMSoft Serial service
             var serviceStr: []const u8 = @ptrCast(@alignCast(&service.uuid.value));
-            std.debug.print("comp service uuid: {s} vs {s}\n", .{serviceStr, btServiceUuidStr});
+            std.debug.print("comp service uuid: {s} vs {s}\n", .{ serviceStr, btServiceUuidStr });
             if (std.mem.eql(u8, serviceStr[0..36], btServiceUuidStr[0..36])) {
-              std.debug.print("found right UART service: {s}\n", .{btServiceUuidStr});
-              btService = service;
-              break;
+                std.debug.print("found right UART service: {s}\n", .{btServiceUuidStr});
+                btService = service;
+                break;
             }
         }
     }
@@ -669,15 +666,15 @@ pub fn main() anyerror!void {
     const prog = args.next();
     const startModeChar = args.next() orelse {
         std.log.err("usage: {s} [startMode] [cameraID] [model]", .{prog.?});
-        std.os.exit(1);
+        std.process.exit(1);
     };
     const deviceIdChar = args.next() orelse {
         std.log.err("usage: {s} [startMode] [cameraID] [model]", .{prog.?});
-        std.os.exit(1);
+        std.process.exit(1);
     };
     const model = args.next() orelse {
         std.log.err("usage: {s} [startMode] [cameraID] [model]", .{prog.?});
-        std.os.exit(1);
+        std.process.exit(1);
     };
     std.debug.print("input model: {s} \n", .{model});
     args.deinit();
@@ -715,9 +712,9 @@ pub fn main() anyerror!void {
     const mean = cv.Scalar.init(0, 0, 0, 0); // mean subtraction is a technique used to aid our Convolutional Neural Networks.
     const crop = false;
     var net = cv.Net.readNetFromDarknet("models/yolo-fastest-1.1-xl.cfg", model) catch |err| {
-    //var net = cv.Net.readNetFromDarknet("models/yolo-fastest-1.1.cfg", model) catch |err| {
+        //var net = cv.Net.readNetFromDarknet("models/yolo-fastest-1.1.cfg", model) catch |err| {
         std.debug.print("Error: {any}\n", .{err});
-        std.os.exit(1);
+        std.process.exit(1);
     };
 
     // YOLO FASTEST V2
@@ -729,7 +726,7 @@ pub fn main() anyerror!void {
     // const crop = false;
     // var net = cv.Net.readNetFromONNX(model) catch |err| {
     //     std.debug.print("Error: {any}\n", .{err});
-    //     std.os.exit(1);
+    //     std.process.exit(1);
     // };
 
     // YOLOv5n
@@ -741,7 +738,7 @@ pub fn main() anyerror!void {
     // const crop = false;
     // var net = cv.Net.readNetFromONNX(model) catch |err| {
     //     std.debug.print("Error: {any}\n", .{err});
-    //     std.os.exit(1);
+    //     std.process.exit(1);
     // };
 
     // YOLOv5-lite
@@ -753,7 +750,7 @@ pub fn main() anyerror!void {
     // const crop = false;
     // var net = cv.Net.readNetFromONNX(model) catch |err| {
     //     std.debug.print("Error: {any}\n", .{err});
-    //     std.os.exit(1);
+    //     std.process.exit(1);
     // };
 
     // TrackerVit fast dnn tracker
@@ -765,11 +762,11 @@ pub fn main() anyerror!void {
 
     if (net.isEmpty()) {
         std.debug.print("Error: could not load model\n", .{});
-        std.os.exit(1);
+        std.process.exit(1);
     }
 
-    net.setPreferableBackend(.default);  // .default, .halide, .open_vino, .open_cv. .vkcom, .cuda
-    net.setPreferableTarget(.fp16);       // .cpu, .fp32, .fp16, .vpu, .vulkan, .fpga, .cuda, .cuda_fp16
+    net.setPreferableBackend(.default); // .default, .halide, .open_vino, .open_cv. .vkcom, .cuda
+    net.setPreferableTarget(.fp16); // .cpu, .fp32, .fp16, .vpu, .vulkan, .fpga, .cuda, .cuda_fp16
     //var layers = try net.getLayerNames(allocator);
     //std.debug.print("getLayerNames {s}\n", .{layers});
     //const unconnected = try net.getUnconnectedOutLayers(allocator);
@@ -787,10 +784,10 @@ pub fn main() anyerror!void {
     defer wsClient.deinit();
 
     try wsClient.handshake("/ws?channels=robot-eyes", .{
-         .timeout_ms = 5000,
-         .headers = "host: localhost:8665\r\n",
+        .timeout_ms = 5000,
+        .headers = "host: localhost:8665\r\n",
     });
-    const msgHandler = MsgHandler{.allocator = allocator};
+    const msgHandler = MsgHandler{ .allocator = allocator };
     const thread = try wsClient.readLoopInNewThread(msgHandler);
     thread.detach();
 
@@ -801,7 +798,7 @@ pub fn main() anyerror!void {
     while (true) {
         webcam.read(&img) catch {
             std.debug.print("capture failed", .{});
-            std.os.exit(1);
+            std.process.exit(1);
         };
         if (img.isEmpty()) {
             continue;
@@ -810,7 +807,7 @@ pub fn main() anyerror!void {
         tracker.frames += 1;
         if (tracker.frames >= 60) {
             const lap: u64 = tracker.getFpsTimeSpent();
-            var flap: f64 = @floatFromInt(lap);
+            const flap: f64 = @floatFromInt(lap);
             const secs: f64 = flap / 1000000000;
             tracker.fps = tracker.frames / secs;
             tracker.frames = 0;
@@ -820,7 +817,6 @@ pub fn main() anyerror!void {
         // var squaredImg = try formatToSquare(img);
         // defer squaredImg.deinit();
         // cv.resize(squaredImg, &squaredImg, size, 0, 0, .{});
-
 
         if (tracker.tracking == false) {
             // We need to see if we find something to track, say, a person
@@ -874,7 +870,6 @@ pub fn main() anyerror!void {
             // std.debug.print("output probMat size {any},\n", .{probMat.size()});
             // try performDetection(&img, probMat, rows, size, &tracker, allocator);
 
-
         } else {
             // we are tracking...
             // we keep an idleTimer for avoiding tracking frozen objects
@@ -887,7 +882,7 @@ pub fn main() anyerror!void {
                     // Centre crosshair
                     const cx: i32 = updateRes.box.x + @divFloor(updateRes.box.width, 2);
                     const cy: i32 = updateRes.box.y + @divFloor(updateRes.box.height, 2);
-                    const centroid = cv.Point.init(cx,cy);
+                    const centroid = cv.Point.init(cx, cy);
                     cv.putText(&img, "+", centroid, cv.HersheyFont{ .type = .simplex }, 0.5, green, 1);
 
                     // check if centroid distance is low (can be a stale object)
@@ -914,11 +909,11 @@ pub fn main() anyerror!void {
                     try tracker.sendCentroid(centroid);
 
                     var buf = [_]u8{undefined} ** 20; // common buf for outputting cv labels to img
-                    const fpsTxt = try std.fmt.bufPrint(&buf, "FPS ({d:.2})", .{ tracker.fps });
-                    cv.putText(&img, fpsTxt, cv.Point.init(10,30), cv.HersheyFont{ .type = .simplex }, 0.5, green, 2);
+                    const fpsTxt = try std.fmt.bufPrint(&buf, "FPS ({d:.2})", .{tracker.fps});
+                    cv.putText(&img, fpsTxt, cv.Point.init(10, 30), cv.HersheyFont{ .type = .simplex }, 0.5, green, 2);
                     @memset(&buf, 0);
-                    const modeTxt = try std.fmt.bufPrint(&buf, "{s}", .{ @tagName(gameMode) });
-                    cv.putText(&img, modeTxt, cv.Point.init(10,60), cv.HersheyFont{ .type = .simplex }, 0.5, green, 2);
+                    const modeTxt = try std.fmt.bufPrint(&buf, "{s}", .{@tagName(gameMode)});
+                    cv.putText(&img, modeTxt, cv.Point.init(10, 60), cv.HersheyFont{ .type = .simplex }, 0.5, green, 2);
                     @memset(&buf, 0);
                     const lbl = try std.fmt.bufPrint(&buf, "{s} ({d:.2})", .{ "person", newScore });
                     cv.rectangle(&img, updateRes.box, green, 1);
@@ -941,15 +936,15 @@ pub fn main() anyerror!void {
                         },
                     }
                 } else {
-                   std.debug.print("LOSING IT...\n", .{});
-                   tracker.trackingDisappeared += 1;
-                   if (tracker.trackingDisappeared > tracker.maxLife) {
-                      std.debug.print("LOST IT FOR GOOD!\n", .{});
-                      tracker.tracking = false;
-                      try tracker.clearObjects();
-                      lastGameMode = gameMode;
-                      gameMode = GameMode.TRACK_IDLE;
-                   }
+                    std.debug.print("LOSING IT...\n", .{});
+                    tracker.trackingDisappeared += 1;
+                    if (tracker.trackingDisappeared > tracker.maxLife) {
+                        std.debug.print("LOST IT FOR GOOD!\n", .{});
+                        tracker.tracking = false;
+                        try tracker.clearObjects();
+                        lastGameMode = gameMode;
+                        gameMode = GameMode.TRACK_IDLE;
+                    }
                 }
             } else {
                 std.debug.print("LOST IT TOTALLY\n", .{});

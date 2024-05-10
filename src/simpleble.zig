@@ -124,9 +124,9 @@ pub extern fn simpleble_peripheral_set_callback_on_disconnected(handle: simplebl
 pub extern fn simpleble_free(handle: ?*anyopaque) void;
 
 pub fn print_buffer_hex(arg_buf: [*c]u8, arg_len: usize, arg_newline: bool) callconv(.C) void {
-    var buf = arg_buf;
-    var len = arg_len;
-    var newline = arg_newline;
+    const buf = arg_buf;
+    const len = arg_len;
+    const newline = arg_newline;
     {
         var i: usize = 0;
         while (i < len) : (i +%= 1) {
@@ -141,10 +141,10 @@ pub fn print_buffer_hex(arg_buf: [*c]u8, arg_len: usize, arg_newline: bool) call
     }
 }
 pub fn adapter_on_scan_start(arg_adapter: simpleble_adapter_t, arg_userdata: ?*anyopaque) callconv(.C) void {
-    var adapter = arg_adapter;
-    var userdata = arg_userdata;
+    const adapter = arg_adapter;
+    const userdata = arg_userdata;
     _ = @TypeOf(userdata);
-    var identifier: [*c]u8 = simpleble_adapter_identifier(adapter);
+    const identifier: [*c]u8 = simpleble_adapter_identifier(adapter);
     if (identifier == @as([*c]u8, @ptrCast(@alignCast(@as(?*anyopaque, @ptrFromInt(@as(c_int, 0))))))) {
         return;
     }
@@ -152,10 +152,10 @@ pub fn adapter_on_scan_start(arg_adapter: simpleble_adapter_t, arg_userdata: ?*a
     simpleble_free(@as(?*anyopaque, @ptrCast(identifier)));
 }
 pub fn adapter_on_scan_stop(arg_adapter: simpleble_adapter_t, arg_userdata: ?*anyopaque) callconv(.C) void {
-    var adapter = arg_adapter;
-    var userdata = arg_userdata;
+    const adapter = arg_adapter;
+    const userdata = arg_userdata;
     _ = @TypeOf(userdata);
-    var identifier: [*c]u8 = simpleble_adapter_identifier(adapter);
+    const identifier: [*c]u8 = simpleble_adapter_identifier(adapter);
     if (identifier == @as([*c]u8, @ptrCast(@alignCast(@as(?*anyopaque, @ptrFromInt(@as(c_int, 0))))))) {
         return;
     }
@@ -163,24 +163,26 @@ pub fn adapter_on_scan_stop(arg_adapter: simpleble_adapter_t, arg_userdata: ?*an
     simpleble_free(@as(?*anyopaque, @ptrCast(identifier)));
 }
 pub fn adapter_on_scan_found(arg_adapter: simpleble_adapter_t, arg_peripheral: simpleble_peripheral_t, arg_userdata: ?*anyopaque) callconv(.C) void {
-    var adapter = arg_adapter;
-    var peripheral = arg_peripheral;
-    var userdata = arg_userdata;
+    const adapter = arg_adapter;
+    const peripheral = arg_peripheral;
+    const userdata = arg_userdata;
     _ = @TypeOf(userdata);
-    var adapter_identifier: [*c]u8 = simpleble_adapter_identifier(adapter);
-    var peripheral_identifier: [*c]u8 = simpleble_peripheral_identifier(peripheral);
-    var peripheral_address: [*c]u8 = simpleble_peripheral_address(peripheral);
+    const adapter_identifier: [*c]u8 = simpleble_adapter_identifier(adapter);
+    const peripheral_identifier: [*c]u8 = simpleble_peripheral_identifier(peripheral);
+    const peripheral_address: [*c]u8 = simpleble_peripheral_address(peripheral);
     if (((adapter_identifier == @as([*c]u8, @ptrCast(@alignCast(@as(?*anyopaque, @ptrFromInt(@as(c_int, 0))))))) or (peripheral_identifier == @as([*c]u8, @ptrCast(@alignCast(@as(?*anyopaque, @ptrFromInt(@as(c_int, 0)))))))) or (peripheral_address == @as([*c]u8, @ptrCast(@alignCast(@as(?*anyopaque, @ptrFromInt(@as(c_int, 0)))))))) {
         return;
     }
-    std.debug.print("Adapter {s} found device: {s} [{s}]\n", .{adapter_identifier, peripheral_identifier, peripheral_address});
+    std.debug.print("Adapter {s} found device: {s} [{s}]\n", .{ adapter_identifier, peripheral_identifier, peripheral_address });
     if (peripheral_list_len < @as(usize, @bitCast(@as(c_long, @as(c_int, SIMPLEBLE_PERIPHERALS_MAX_COUNT))))) {
-        peripheral_list[blk: {
+        peripheral_list[
+            blk: {
                 const ref = &peripheral_list_len;
                 const tmp = ref.*;
                 ref.* +%= 1;
                 break :blk tmp;
-            }] = peripheral;
+            }
+        ] = peripheral;
     } else {
         simpleble_peripheral_release_handle(peripheral);
     }
@@ -190,30 +192,30 @@ pub fn adapter_on_scan_found(arg_adapter: simpleble_adapter_t, arg_peripheral: s
 
 // TODO: handle peripheral update
 pub fn adapter_on_scan_updated(arg_adapter: simpleble_adapter_t, arg_peripheral: simpleble_peripheral_t, arg_userdata: ?*anyopaque) callconv(.C) void {
-    var adapter = arg_adapter;
-    var peripheral = arg_peripheral;
-    var userdata = arg_userdata;
+    const adapter = arg_adapter;
+    const peripheral = arg_peripheral;
+    const userdata = arg_userdata;
     _ = @TypeOf(userdata);
-    var adapter_identifier: [*c]u8 = simpleble_adapter_identifier(adapter);
-    var peripheral_identifier: [*c]u8 = simpleble_peripheral_identifier(peripheral);
-    var peripheral_address: [*c]u8 = simpleble_peripheral_address(peripheral);
+    const adapter_identifier: [*c]u8 = simpleble_adapter_identifier(adapter);
+    const peripheral_identifier: [*c]u8 = simpleble_peripheral_identifier(peripheral);
+    const peripheral_address: [*c]u8 = simpleble_peripheral_address(peripheral);
     if (((adapter_identifier == @as([*c]u8, @ptrCast(@alignCast(@as(?*anyopaque, @ptrFromInt(@as(c_int, 0))))))) or (peripheral_identifier == @as([*c]u8, @ptrCast(@alignCast(@as(?*anyopaque, @ptrFromInt(@as(c_int, 0)))))))) or (peripheral_address == @as([*c]u8, @ptrCast(@alignCast(@as(?*anyopaque, @ptrFromInt(@as(c_int, 0)))))))) {
         return;
     }
-    std.debug.print("Adapter {s} updated device: {s} [{s}]\n", .{adapter_identifier, peripheral_identifier, peripheral_address});
+    std.debug.print("Adapter {s} updated device: {s} [{s}]\n", .{ adapter_identifier, peripheral_identifier, peripheral_address });
     simpleble_peripheral_release_handle(peripheral);
     simpleble_free(@as(?*anyopaque, @ptrCast(peripheral_address)));
     simpleble_free(@as(?*anyopaque, @ptrCast(peripheral_identifier)));
 }
 
 pub fn peripheral_on_notify(arg_service: simpleble_uuid_t, arg_characteristic: simpleble_uuid_t, arg_data: [*c]const u8, arg_data_length: usize, arg_userdata: ?*anyopaque) callconv(.C) void {
-    var service = arg_service;
+    const service = arg_service;
     _ = @TypeOf(service);
-    var characteristic = arg_characteristic;
+    const characteristic = arg_characteristic;
     _ = @TypeOf(characteristic);
-    var data = arg_data;
-    var data_length = arg_data_length;
-    var userdata = arg_userdata;
+    const data = arg_data;
+    const data_length = arg_data_length;
+    const userdata = arg_userdata;
     _ = @TypeOf(userdata);
     std.debug.print("Received: ", .{});
     var i: usize = 0;

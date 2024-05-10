@@ -15,9 +15,9 @@ pub fn build(b: *std.Build) void {
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
-    // Compile static library of opencv
+    // Compile static zig library of opencv
     const cv = b.addStaticLibrary(std.Build.StaticLibraryOptions{
-        .name = "opencv",
+        .name = "zigcv",
         .target = target,
         .optimize = optimize,
     });
@@ -27,7 +27,7 @@ pub fn build(b: *std.Build) void {
     cv.addLibraryPath(.{ .path = "libs/contrib" });
     cv.addIncludePath(.{ .path = "/usr/local/include" });
     cv.addIncludePath(.{ .path = "/usr/local/include/opencv4" });
-    cv.addCSourceFiles(&.{
+    cv.addCSourceFiles(.{ .files = &.{
         "libs/asyncarray.cpp",
         "libs/calib3d.cpp",
         "libs/core.cpp",
@@ -43,12 +43,12 @@ pub fn build(b: *std.Build) void {
         "libs/video.cpp",
         "libs/videoio.cpp",
         "libs/contrib/tracking.cpp",
-    }, &[_][]const u8{
+    }, .flags = &[_][]const u8{
         "-Wall",
         "-Wextra",
         "-std=c++11",
         "-stdlib=libc++",
-    });
+    } });
 
     cv.linkLibC();
     cv.linkLibCpp();
@@ -57,10 +57,10 @@ pub fn build(b: *std.Build) void {
     // Compile static library of opencv for win64
     const wincv = b.addStaticLibrary(std.Build.StaticLibraryOptions{
         .name = "opencv",
-        .target = std.zig.CrossTarget{
+        .target = b.resolveTargetQuery(.{
             .cpu_arch = .x86_64,
             .os_tag = .windows,
-        },
+        }),
         .optimize = optimize,
     });
     wincv.addIncludePath(.{ .path = "include" });
@@ -69,7 +69,7 @@ pub fn build(b: *std.Build) void {
     wincv.addLibraryPath(.{ .path = "libs/contrib" });
     wincv.addIncludePath(.{ .path = "/usr/local/include" });
     wincv.addIncludePath(.{ .path = "/usr/local/include/opencv4" });
-    wincv.addCSourceFiles(&.{
+    wincv.addCSourceFiles(.{ .files = &.{
         "libs/asyncarray.cpp",
         "libs/calib3d.cpp",
         "libs/core.cpp",
@@ -85,11 +85,11 @@ pub fn build(b: *std.Build) void {
         "libs/video.cpp",
         "libs/videoio.cpp",
         "libs/contrib/tracking.cpp",
-    }, &[_][]const u8{
+    }, .flags = &[_][]const u8{
         "-Wall",
         "-Wextra",
         "-std=c++11",
-    });
+    } });
 
     wincv.linkLibC();
     wincv.linkLibCpp();
@@ -105,25 +105,47 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    // //exe.root_module.addImport("zigcv", b.createModule(.{ .root_source_file = .{ .path = "libs/zigcv.zig" } }));
+    //exe.addObjectFile(.{ .path = "zig-out/lib/libopencv.a"});
+    const zigcvMod = b.addModule("zigcv", .{ .root_source_file = .{ .path = "libs/zigcv.zig" } });
+    zigcvMod.addCSourceFiles(.{ .files = &.{
+        "libs/asyncarray.cpp",
+        "libs/calib3d.cpp",
+        "libs/core.cpp",
+        "libs/dnn.cpp",
+        "libs/features2d.cpp",
+        "libs/highgui.cpp",
+        "libs/imgcodecs.cpp",
+        "libs/imgproc.cpp",
+        "libs/objdetect.cpp",
+        "libs/photo.cpp",
+        "libs/svd.cpp",
+        "libs/version.cpp",
+        "libs/video.cpp",
+        "libs/videoio.cpp",
+        "libs/contrib/tracking.cpp",
+    }, .flags = &[_][]const u8{
+        "-Wall",
+        "-Wextra",
+        "-std=c++11",
+    } });
+    zigcvMod.addIncludePath(.{ .path = "include" });
+    zigcvMod.addIncludePath(.{ .path = "include/contrib" });
+    zigcvMod.addIncludePath(.{ .path = "/usr/local/include" });
+    zigcvMod.addIncludePath(.{ .path = "/usr/local/include/opencv4" });
+    exe.root_module.addImport("zigcv", zigcvMod);
 
-    exe.addAnonymousModule("zigcv", .{ .source_file = .{ .path = "libs/zigcv.zig" } });
+    // // Websocket module
+    const wsMod = b.dependency("websocket", .{ .target = target, .optimize = optimize });
+    exe.root_module.addImport("websocket", wsMod.module("websocket"));
 
-    // Websocket module
-    const wsMod = b.dependency("websocket", .{ .target = target, .optimize = optimize});
-    exe.addModule("websocket", wsMod.module("websocket"));
-
-    exe.linkLibrary(cv);
-    exe.addIncludePath(.{ .path = "include" });
-    exe.addIncludePath(.{ .path = "include/contrib" });
-    exe.addIncludePath(.{ .path = "/usr/local/include" });
-    exe.addIncludePath(.{ .path = "/usr/local/include/opencv4" });
     exe.linkLibC();
     exe.linkSystemLibrary("opencv4");
     exe.linkSystemLibrary("simpleble-c");
     exe.linkSystemLibrary("unwind");
     exe.linkSystemLibrary("m");
     exe.linkSystemLibrary("c");
-
+    exe.linkLibrary(cv);
     b.installArtifact(exe);
 
     // target armv7 - raspberry PI
@@ -189,7 +211,6 @@ pub fn build(b: *std.Build) void {
     // // win.addIncludePath(.{ .path = "include/install" });
     // // //win.addIncludePath("c:/opencv/build/install/include");
     // // //win.addLibraryPath("c:/opencv/build/install/x64/mingw/staticlib");
-
 
     // // win.addObjectFile(.{ .path = "libs/win64/mingw64/libstdc++-6.dll"});
     // win.addAnonymousModule("zigcv", .{ .source_file = .{ .path = "libs/zigcv.zig" } });

@@ -305,7 +305,7 @@ pub const Tracker = struct {
             pub fn update(self: *Self, image: Mat) UpdateReturn {
                 var c_box: c.Rect = undefined;
                 const success = c.Tracker_Update(self.ptr, image.toC(), @ptrCast(&c_box));
-                var rect = Rect.initFromC(c_box);
+                const rect = Rect.initFromC(c_box);
                 return UpdateReturn{
                     .box = rect,
                     .success = success,
@@ -386,7 +386,7 @@ pub const TrackerNano = struct {
     const UpdateReturn = struct { box: Rect, success: bool };
 
     pub fn init() !c.TrackerNano {
-        var ptr = c.TrackerNano_Create();
+        const ptr = c.TrackerNano_Create();
         const nn_ptr = try epnn(ptr);
         return Self{ .ptr = nn_ptr };
     }
@@ -404,7 +404,7 @@ pub const TrackerNano = struct {
     pub fn update(self: *Self, img: Mat) !void {
         var c_box: c.Rect = undefined;
         const success = c.TrackerNano_Update(self.ptr, img.toC(), @ptrCast(&c_box));
-        var rect = Rect.initFromC(c_box);
+        const rect = Rect.initFromC(c_box);
         return UpdateReturn{
             .box = rect,
             .success = success,
@@ -439,7 +439,7 @@ pub const TrackerVit = struct {
         const target = dnn.Net.TargetType.cpu;
         const meanval = core.Scalar.init(0.485, 0.456, 0.406, 0.0).toC();
         const stdval = core.Scalar.init(0.229, 0.224, 0.225, 0).toC();
-        var ptr = c.TrackerVit_CreateWithParams(c_model, @intFromEnum(backend), @intFromEnum(target), meanval, stdval);
+        const ptr = c.TrackerVit_CreateWithParams(c_model, @intFromEnum(backend), @intFromEnum(target), meanval, stdval);
         const nn_ptr = try epnn(ptr);
         return Self{ .ptr = nn_ptr };
     }
@@ -458,7 +458,7 @@ pub const TrackerVit = struct {
         var c_box: c.Rect = undefined;
         const success = c.TrackerVit_Update(self.ptr, img.*.ptr, &c_box);
         //const success = c.TrackerVit_Update(self.ptr, img.toC(), @ptrCast(&c_box));
-        var rect = Rect.initFromC(c_box);
+        const rect = Rect.initFromC(c_box);
         return UpdateReturn{
             .box = rect,
             .success = success,
@@ -678,7 +678,7 @@ test "video findTransformECC" {
     defer map_translation.deinit();
     const eec_iteration = 50;
     const eec_epsilon = -1;
-    var ct = try core.TermCriteria.init(.{ .count = true, .eps = true }, eec_iteration, eec_epsilon);
+    const ct = try core.TermCriteria.init(.{ .count = true, .eps = true }, eec_iteration, eec_epsilon);
 
     var input_mask = try Mat.init();
     defer input_mask.deinit();

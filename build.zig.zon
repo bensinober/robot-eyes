@@ -1,10 +1,21 @@
 .{
-    .name = "shell-game",
+    .name = "robot-eyes",
     .version = "1.0.1",
     .dependencies = .{
-      .websocket = .{
-        .url = "https://github.com/karlseguin/websocket.zig/archive/372020a256e12e7a5c3c03a1feee20a85d9d67cd.tar.gz",
-        .hash = "1220bf8e20e4fdaec3ffb8ce4b51efd95a1acc0a8d76e1f0e06e622f82ac8fb7b404",
+      .zigcv = .{
+        .path = "",
       },
+      .websocket = .{
+        .url = "https://github.com/karlseguin/websocket.zig/archive/c77f87d0e6548865636eb9781106a8be72e5755a.tar.gz",
+        .hash = "12208720b772330f309cfb48957f4152ee0930b716837d0c1d07fee2dea2f4dc712e",
+      },
+    },
+    .paths = .{
+      "src",
+      "libs",
+      "www",
+      "build.zig",
+      "build.zig.zon",
+      "include",
     },
 }
