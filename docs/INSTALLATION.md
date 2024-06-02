@@ -85,7 +85,7 @@ for info: https://support.zivid.com/en/latest/getting-started/software-installat
         -D WITH_OPENCL=ON \
         -D CMAKE_INSTALL_PREFIX=/usr/local \
         -D OPENCV_DNN_OPENCL=ON \
-        -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules/ \
+        -D OPENCV_EXTRA_MODULES_PATH=../opencv_contrib/modules/ \
         -D OPENCV_ENABLE_NONFREE=ON \
         -D OPENCV_GAPI_ONNX_MODEL_PATH=OFF \
         -D WITH_JASPER=OFF \
@@ -101,7 +101,7 @@ for info: https://support.zivid.com/en/latest/getting-started/software-installat
         -D BUILD_opencv_python3=NO \
         -D OPENCV_GENERATE_PKGCONFIG=ON \
         -D ENABLE_FAST_MATH=1 \
-        ..
+        ../opencv
 
 to run with opencl + dnn
 
