@@ -693,7 +693,7 @@ pub fn main() anyerror!void {
     defer webcam.deinit();
 
     // open display window
-    const winName = "DNN Detection";
+    const winName = "Robot eyes";
     var window = try cv.Window.init(winName);
     defer window.deinit();
 
@@ -779,10 +779,16 @@ pub fn main() anyerror!void {
     //     std.debug.print("unconnected layer output {d}: {s}\n", .{li, l.getName()});
     // }
 
-    // Game mode manager in separate thread
-    wsClient = try websocket.connect(allocator, "localhost", 8665, .{});
+    var certBundle: std.crypto.Certificate.Bundle = .{};
+    defer certBundle.deinit(allocator);
+    var certFile = try std.fs.cwd().openFile("cert.pem", .{});
+    defer certFile.close();
+
+    _ = try std.crypto.Certificate.Bundle.addCertsFromFile(&certBundle, allocator, certFile);
+    wsClient = try websocket.connect(allocator, "localhost", 8665, .{ .tls = true, .ca_bundle = certBundle });
     defer wsClient.deinit();
 
+    // Game mode manager in separate thread
     try wsClient.handshake("/ws?channels=robot-eyes", .{
         .timeout_ms = 5000,
         .headers = "host: localhost:8665\r\n",

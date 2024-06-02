@@ -53,12 +53,13 @@ const connectToEyes = async function() {
   try {
     console.log("Requesting Bluetooth Device...")
     //var ble = await navigator.bluetooth.getAvailability()
-    const btDevice = await navigator.bluetooth.requestDevice({
+    const options = {
       //acceptAllDevices: true,
-      filters: [{ services: [serviceUUID] }], // fake service to send raw data as serial
+      filters: [{ services: [serviceUUID] }]
       //filters: [{ name: "HMSoft" }],
-
-    })
+    }
+    //const scan = await navigator.bluetooth.requestLEScan(options)
+    const btDevice = await navigator.bluetooth.requestDevice(options)
     //console.log(btDevice, btDevice.name, btDevice.id, btDevice.gatt.connected)
 
     // BTLE
@@ -96,7 +97,7 @@ const setSnapContext = function(ctx) {
   ctxSnap = ctx
 }
 
-const ws = new WebSocket(`ws://${window.location.host}/ws?channels=robot-eyes`)
+const ws = new WebSocket(`wss://${window.location.host}/ws?channels=robot-eyes`)
 ws.addEventListener("open", event => ws.binaryType = "arraybuffer")
 ws.addEventListener("message", async event => {
   //console.log(`INCOMING: ${event.data}`)

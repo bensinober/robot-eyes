@@ -9,6 +9,10 @@ var eyesActive = false
 const httpServer = Bun.serve({
   port: 8665,
   host: "0.0.0.0",
+  tls: {
+    key: Bun.file("./key.pem"),
+    cert: Bun.file("./cert.pem"),
+  },
   async fetch(req, server) {
     const url = new URL(req.url);
     switch (url.pathname) {
