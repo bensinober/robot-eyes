@@ -13,9 +13,6 @@ var btCharacteristic // the btle char device to send centroids to
 var slideIdx = 0*/
 const cmdBuf = new ArrayBuffer(6)
 const dvCmd = new DataView(cmdBuf)
-dvCmd.setUint8(0, 1) // command
-dvCmd.setInt32(2, 0, true) // command length 0, little endian
-
 var ctxSnap
 
 /*document.getElementById("connectBtn").addEventListener("click", async(evt) => {
@@ -89,7 +86,19 @@ const clearData = function() {
 }
 
 const sendGameMode = function(mode) {
+  dvCmd.setUint8(0, 1) // cmd 1: change GameMode
   dvCmd.setUint8(1, mode)
+  dvCmd.setInt32(2, 0, true) // command length 0, little endian
+  ws.send(new Uint8Array(cmdBuf))
+}
+
+const activateEyes = function() {
+  dvCmd.setUint8(0, 2) // cmd 2: activate BTLE Eyes
+  ws.send(new Uint8Array(cmdBuf))
+}
+
+const deactivateEyes = function() {
+  dvCmd.setUint8(0, 3) // cmd 3: deactivate BTLE Eyes
   ws.send(new Uint8Array(cmdBuf))
 }
 
@@ -110,6 +119,7 @@ ws.addEventListener("message", async event => {
   gameMode = GameModes[parseInt(mode, 10)]
   document.getElementById("gameMode").innerHTML = gameMode.toLowerCase()
 
+  // Received msg
   switch (cmd) {
   case 0:
     //console.log(`echo cmd res: ${data}`)
@@ -155,4 +165,4 @@ ws.addEventListener("message", async event => {
   }
 })
 
-export { writeToEyes, connectToEyes, sendGameMode, clearData, setSnapContext }
+export { writeToEyes, connectToEyes, sendGameMode, clearData, setSnapContext, activateEyes, deactivateEyes }

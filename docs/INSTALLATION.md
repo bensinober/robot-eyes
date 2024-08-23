@@ -129,14 +129,19 @@ On linux, the best approach is actually: download OpenCV source and build with Z
 mkdir ~/opencv_build && cd ~/opencv_build
 git clone https://github.com/opencv/opencv.git
 git clone https://github.com/opencv/opencv_contrib.git
+```
 
+optionally: from tag:
+```
 curl -Lo opencv.zip https://github.com/opencv/opencv/archive/refs/tags/$(OPENCV_VERSION).zip
 unzip -q opencv.zip
 curl -Lo opencv_contrib.zip https://github.com/opencv/opencv_contrib/archive/refs/tags/$(OPENCV_VERSION).zip
 unzip -q opencv_contrib.zip
 rm opencv.zip opencv_contrib.zip
-
 cd opencv
+```
+build
+```
 mkdir -p build && cd build
 
 CC="zig cc" CXX="zig c++" cmake \
@@ -162,7 +167,7 @@ CC="zig cc" CXX="zig c++" cmake \
     -D BUILD_opencv_python2=NO \
     -D BUILD_opencv_python3=NO \
     -D OPENCV_GENERATE_PKGCONFIG=ON \
-    ..
+    ../cmake
 ```
 
 Optionally with Nvidia Cuda support:
@@ -329,7 +334,7 @@ Up:$color ${upspeed} ${color grey} - Down:$color ${downspeed}
 ${color grey}NETWORK ${hr 2}
 IP wifi: $alignr ${addr wlan0}
 IP wan: $alignr ${execi 3600 curl ifconfig.me | tail }
-IP lan: $alignr ${addr eth0}
+IP lan: $alignr ${addr eno1}
 $hr
 DISKS ${hr 2}
 / $alignc ${fs_used /} / ${fs_size /} $alignr ${fs_used_perc /}%
@@ -431,11 +436,12 @@ mkdir -p ~/.config/autostart
 cat <<'EOF' > ~/.config/autostart/conky.desktop
 [Desktop Entry]
 Type=Application
-Exec=sh -c "sleep 10; conky;"
+Exec=sh -c "sleep 5; conky;"
 Name=Conky
 Comment=Autostart conky at login
 EOF
 ```
+
 ```
 cat <<'EOF' > ~/.config/autostart/robot-eyes.desktop
 [Desktop Entry]

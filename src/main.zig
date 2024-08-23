@@ -14,6 +14,7 @@ const Size = cv.Size;
 const btPeriphStr: []const u8 = "A4:06:E9:8E:00:0A";
 const btServiceUuidStr: []const u8 = "0000ffe0-0000-1000-8000-00805f9b34fb";
 const btCharId: usize = 0;
+var btConnected: bool = false;
 
 // micro:bit
 // const btPeriphStr: []const u8 = "FB:C9:6D:CB:9D:63";
@@ -78,13 +79,20 @@ var wsClient: websocket.Client = undefined; // Websocket client
 //var httpClient: std.http.Client = undefined;  // HTTP client for sending images
 //var server: std.net.StreamServer = undefined; // listening TCP socket for receiving commands from client
 
+// This is the message handler API:
+// request format:  [cmd] [optional param]
+// response format: [0x00] [GameMode] [length 4byte int] [string byte array]
+// 1: Change of GameMode         - ex: 0x01 0x02 = change to GameMode.STOP
+// 2: Connect BTLE peripheral    - ex: 0x02
+// 3: Disconnect BTLE peripheral - ex: 0x03
 const MsgHandler = struct {
     allocator: Allocator,
 
     // Handle Commands via websocket
     pub fn handle(self: MsgHandler, msg: websocket.Message) !void {
         std.log.debug("got msg: {any}", .{msg.data});
-        if (msg.data[0] == 1) {
+        const cmd = msg.data[0];
+        if (cmd == 1) {
             const mode: GameMode = @enumFromInt(msg.data[1]);
             lastGameMode = gameMode;
             gameMode = mode;
@@ -93,7 +101,12 @@ const MsgHandler = struct {
             const res = try self.allocator.alloc(u8, 8);
             @memcpy(res, &[_]u8{ 0, mb, 2, 0, 0, 0, 0x4f, 0x4b }); // OK
             _ = try wsClient.writeBin(res);
+        } else if (cmd == 2) {
+            connectBluetooth();
+        } else if (cmd == 3) {
+            disconnectBluetooth();
         } else {
+            std.log.debug("ignoring unknown command: {d}", .{ cmd });
             const res = try self.allocator.alloc(u8, 9);
             const mb: u8 = std.mem.asBytes(&gameMode)[0];
             @memcpy(res, &[_]u8{ 0, mb, 2, 0, 0, 0, 0x4e, 0x4f, 0x4b }); // NOK
@@ -265,6 +278,9 @@ const Tracker = struct {
     // we need to map input vector x,y (640, 480) to u8 bytes (255, 255)
     // send as 5 u8 bytes { 0, 2, x, y, CRLF }, not expecting any response
     fn sendCentroidToEyes(_: Self, p: cv.core.Point) !void {
+        if (btConnected == false) {
+            return;
+        }
         // x, y is only two u8 bytes + 0, 2
         const x1: f32 = @floatFromInt(p.x);
         const y1: f32 = @floatFromInt(p.y);
@@ -566,6 +582,10 @@ pub fn formatToSquare(src: Mat) !Mat {
 }
 
 pub fn connectBluetooth() void {
+    std.debug.print("Connecting to bluetooth.\n", .{});
+    if (btConnected == true) {
+        return; // already connected
+    }
     const adapter_count: usize = ble.simpleble_adapter_get_count();
     if (adapter_count == @as(usize, @bitCast(@as(c_long, @as(c_int, 0))))) {
         std.debug.print("No adapter was found.\n", .{});
@@ -583,7 +603,7 @@ pub fn connectBluetooth() void {
     _ = ble.simpleble_adapter_scan_for(adapter, @as(c_int, 3000));
 
     var selection: usize = undefined;
-    {
+    var found: bool = false;
         var i: usize = 0;
         while (i < ble.peripheral_list_len) : (i +%= 1) {
             const peripheral: ble.simpleble_peripheral_t = ble.peripheral_list[i];
@@ -592,10 +612,15 @@ pub fn connectBluetooth() void {
             const periphStr = std.mem.span(@as([*:0]u8, @ptrCast(@alignCast(peripheral_address))));
             std.debug.print("comp peripheral: {s} vs {s}\n", .{ periphStr, btPeriphStr });
             if (std.mem.eql(u8, periphStr, btPeriphStr)) {
+                std.debug.print("found peripheral: {s} id: {any}\n", .{ btPeriphStr, selection });
                 selection = i;
+                found = true;
                 break;
             }
         }
+    if (!found) {
+        std.debug.print("Could not find peripheral with mac: {s}\n", .{btPeriphStr});
+        return;
     }
 
     std.debug.print("Selected: {d}\n", .{selection});
@@ -618,11 +643,10 @@ pub fn connectBluetooth() void {
 
     // Service
     const services_count: usize = ble.simpleble_peripheral_services_count(btPeripheral);
-    {
-        var i: usize = 0;
-        while (i < services_count) : (i +%= 1) {
+        var s: usize = 0;
+        while (s < services_count) : (s +%= 1) {
             var service: ble.simpleble_service_t = undefined;
-            err_code = ble.simpleble_peripheral_services_get(btPeripheral, i, &service);
+            err_code = ble.simpleble_peripheral_services_get(btPeripheral, s, &service);
             if (err_code != @as(c_uint, @bitCast(ble.SIMPLEBLE_SUCCESS))) {
                 std.debug.print("Invalid bluetooth service selection\n", .{});
                 ble.clean_on_exit(adapter);
@@ -635,10 +659,23 @@ pub fn connectBluetooth() void {
             if (std.mem.eql(u8, serviceStr[0..36], btServiceUuidStr[0..36])) {
                 std.debug.print("found right UART service: {s}\n", .{btServiceUuidStr});
                 btService = service;
+                btConnected = true;
                 break;
             }
         }
+    return;
+}
+
+pub fn disconnectBluetooth() void {
+    if (btConnected == false) {
+        return; // no need to disconnect
     }
+    const err_code = ble.simpleble_peripheral_disconnect(btPeripheral);
+    if (err_code != @as(c_uint, @bitCast(ble.SIMPLEBLE_SUCCESS))) {
+        std.debug.print("Failed to disconnect to bluetooth peripheral\n", .{});
+    }
+    btPeripheral = undefined;
+    btConnected = false;
     return;
 }
 
@@ -699,6 +736,7 @@ pub fn main() anyerror!void {
 
     // Init bluetooth and find HMSoft adapter
     connectBluetooth();
+    defer disconnectBluetooth();
 
     // prepare image matrix
     var img = try cv.Mat.init();

@@ -16,6 +16,12 @@
         height: 640px;
         padding: 20px;
       }
+      .active {
+        background-color: red;
+      }
+      .inactive {
+         background-color: green;
+      }
       #title { font-family: 'Blade Runner Movie Font', sans-serif; text-align: center; height: 5rem; font-size: 62px;}
     </style>
 </head>
@@ -26,18 +32,16 @@
     <div class="buttons">
       <button id="startSnap">start</button>
       <button id="stopSnap">stop</button>
+      <button id="connectBtn" class="inactive">eyes on</button>
     </div>
     <div id="gameMode"></div>
     <div class="centroid">150,150</div>
     <canvas id="snapBox" width="640" height="640"></canvas>
-  <div>
-    <!--<button id="connectBtn">Koble</button>-->
-  </div>
   <script type="module" src="assets/script.js"></script>
   <script type="module" type="application/javascript">
 
-    import { writeToEyes, connectToEyes, sendGameMode, clearData, setSnapContext } from "./assets/script.js"
-
+    import { writeToEyes, connectToEyes, sendGameMode, clearData, setSnapContext, activateEyes, deactivateEyes } from "./assets/script.js"
+    let eyesActive = false
     document.addEventListener("DOMContentLoaded",function(){
 
       // js to handle eye snaps
@@ -61,6 +65,24 @@
         ctxSnap.clearRect(0, 0, snapCanvas.width, snapCanvas.height)
         clearData()
         clearInterval(timerId)
+      })
+
+      const eyesConnBtn = document.getElementById("connectBtn")
+      eyesConnBtn.addEventListener("click", async(evt) => {
+        eyesActive = !eyesActive
+        if (eyesActive) {
+            activateEyes()
+            console.log("TOGGLE EYES ON")
+            eyesConnBtn.classList.remove("inactive")
+            eyesConnBtn.classList.add("active")
+            eyesConnBtn.innerHTML = "eyes off"
+        } else {
+            deactivateEyes()
+            console.log("TOGGLE EYES OFF")
+            eyesConnBtn.classList.remove("active")
+            eyesConnBtn.classList.add("inactive")
+            eyesConnBtn.innerHTML = "eyes on"
+        }
       })
     })
   </script>

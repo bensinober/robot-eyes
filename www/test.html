@@ -23,7 +23,12 @@
 <body>
   <div id="title">robot eyes test canvas</div>
   <div class="container">
-    <button id="connectBtn">Koble</button>
+    <div class="buttons">
+      <button id="deactivateEyesBtn" class="inactive">disconnect app eyes</button>
+      <button id="activateEyesBtn" class="inactive">connect app eyes</button>
+      <button id="connectBtn">Connect web eyes</button>
+    </div>
+    <div id="gameMode"></div>
     <div class="centroid">150,150</div>
     <canvas id="robotEyesCanvas" width="640" height="640"></canvas>
   </div>
@@ -46,6 +51,22 @@
         } else {
           console.log("you need to activate web bluetooth api in browser!")
         }
+      })
+
+      const deactivateEyesBtn = document.getElementById("deactivateEyesBtn")
+      const activateEyesBtn = document.getElementById("activateEyesBtn")
+      activateEyesBtn.addEventListener("click", async(evt) => {
+        activateEyes()
+        console.log("TOGGLE EYES ON")
+        activateEyesBtn.classList.remove("inactive")
+        deactivateEyesBtn.classList.add("inactive")
+      })
+
+      deactivateEyesBtn.addEventListener("click", async(evt) => {
+        deactivateEyes()
+        console.log("TOGGLE EYES OFF")
+        deactivateEyesBtn.classList.remove("inactive")
+        activateEyesBtn.classList.add("inactive")
       })
 
       // test.js for calibrating eyes
