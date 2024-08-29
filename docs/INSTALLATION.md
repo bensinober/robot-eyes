@@ -19,12 +19,14 @@ developed by Ultralytics and Torchvision.
 
 You will, of course, [need Zig](https://ziglang.org/learn/getting-started/).
 
-You will need OpenCV v4.8.0 installed with development headers. See install for linux below.
+You will need OpenCV v4.10.0+ installed with development headers. See install for linux below.
 
 You will need a YOLO v8 model file, in ONNX format. I prepare mine with movie and autodistillation.
 To be documented soon.
 
 You will need Bun.js for API, web and bluetooth handling.
+
+You will also need to include opencv headers in `include` folder, either symlink or copy in
 
 ## Build and run
 
