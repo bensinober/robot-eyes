@@ -9,12 +9,17 @@
     <link href="https://fonts.googleapis.com/css?family=Orbitron" rel="stylesheet">
     <style>
       .container {
-        position: relative;
-        margin: auto;
+        height: 800px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
         overflow: hidden;
-        width: 640px;
-        height: 640px;
-        padding: 20px;
+      }
+      #drawSvg {
+        border: 10px solid black;
+        box-shadow: inset 0 0 4px 0 rgba(0, 0, 0, 0.2);
+        touch-action: none; /* neccessary not for BOTH pointer and touch triggering at same time */
       }
       #title { font-family: 'Blade Runner Movie Font', sans-serif; text-align: center; height: 5rem; font-size: 62px;}
     </style>
@@ -24,26 +29,36 @@
   <div id="title">robot eyes test canvas</div>
   <div class="container">
     <div class="buttons">
-      <button id="deactivateEyesBtn" class="inactive">disconnect app eyes</button>
-      <button id="activateEyesBtn" class="inactive">connect app eyes</button>
+      <button id="deactivateEyesBtn" class="inactive">TODO: disconnect app eyes</button>
+      <button id="activateEyesBtn" class="inactive">TODO: connect app eyes</button>
       <button id="connectBtn">Connect web eyes</button>
     </div>
     <div id="gameMode"></div>
     <div class="centroid">150,150</div>
-    <canvas id="robotEyesCanvas" width="640" height="640"></canvas>
+    <div>
+      <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="drawSvg" x="0px" y="0px" width="640px" height="640px" viewBox="0 0 640 640" enable-background="new 0 0 640 640" xml:space="preserve">
+      </svg>
+    </div>
   </div>
-  <script type="module" type= "application/javascript">
-    import { writeToEyes, connectToEyes } from "./assets/script.js"
+  <script type="module" id="main">
+    //import { activateEyes } from "./assets/script.js"
+    import { connectToEyes, writeToEyes, eyesConnected } from "./assets/eyes.js"
+    import { startDraw, stopDraw, draw } from "./assets/draw.js"
 
-    document.addEventListener("DOMContentLoaded", function(){
+    window.addEventListener("load", () => {
+      const drawSvg = document.querySelector("#drawSvg")
+      drawSvg.addEventListener("mousedown", startDraw)
+      drawSvg.addEventListener("mouseup", stopDraw)
+      drawSvg.addEventListener("mousemove", draw)
+      drawSvg.addEventListener("pointerdown", startDraw)
+      drawSvg.addEventListener("pointerup", stopDraw)
+      drawSvg.addEventListener("pointermove", draw)
+      //drawSvg.addEventListener("pointercancel", stopDraw)
 
       document.getElementById("connectBtn").addEventListener("click", async(evt) => {
         // connect to eyes
         if ("bluetooth" in navigator) {
           try {
-            //Device A4:06:E9:8E:00:0A HMSoft
-            // HMSoft uU8ptu87vOOkd/NIwmqtDg== false
-            //console.log("here")
             await connectToEyes()
           } catch(err) {
             console.log(err)
@@ -55,6 +70,8 @@
 
       const deactivateEyesBtn = document.getElementById("deactivateEyesBtn")
       const activateEyesBtn = document.getElementById("activateEyesBtn")
+
+      // BTLE connect from app
       activateEyesBtn.addEventListener("click", async(evt) => {
         activateEyes()
         console.log("TOGGLE EYES ON")
@@ -68,28 +85,6 @@
         deactivateEyesBtn.classList.remove("inactive")
         activateEyesBtn.classList.add("inactive")
       })
-
-      // test.js for calibrating eyes
-      const testCanvas = document.querySelector("#robotEyesCanvas")
-      var ctxTestCanvas = testCanvas.getContext("2d")
-
-      ctxTestCanvas.fillStyle = "rgb(12,50,10, 0.2)"
-      ctxTestCanvas.fillRect(0, 0, testCanvas.width, testCanvas.height)
-
-      testCanvas.addEventListener("mousedown", function(e) {
-          getCursorPosition(testCanvas, e)
-      })
-
-      // TEST CANVAS FOR ROBOT EYES
-      function getCursorPosition(canvas, event) {
-        const rect = canvas.getBoundingClientRect()
-        const x = Math.floor(event.clientX - rect.left)
-        const y = Math.floor(event.clientY - rect.top)
-        console.log("x: " + x + " y: " + y)
-        const centroidDiv = document.querySelector(".centroid")
-        centroidDiv.innerHTML = `${x},${y}`
-        writeToEyes(x, y)
-      }
 
     })
   </script>
