@@ -10,16 +10,22 @@ const Size = cv.Size;
 
 // TODO: remove use of Result.id - we only track one object at a time anyways
 
-// BLE HMSoft10
-const btPeriphStr: []const u8 = "A4:06:E9:8E:00:0A";
-const btServiceUuidStr: []const u8 = "0000ffe0-0000-1000-8000-00805f9b34fb";
-const btCharId: usize = 0;
 var btConnected: bool = false;
 
-// micro:bit
-// const btPeriphStr: []const u8 = "FB:C9:6D:CB:9D:63";
-// const btServiceUuidStr: []const u8 = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
-// const btCharId: usize = 1;
+// BLE HMSoft10
+//const btPeriphStr: []const u8 = "A4:06:E9:8E:00:0A";
+//const btServiceUuidStr: []const u8 = "0000ffe0-0000-1000-8000-00805f9b34fb";
+//const btCharId: usize = 0;
+
+// micro:bit v1
+//const btPeriphStr: []const u8 = "FB:C9:6D:CB:9D:63";
+//const btServiceUuidStr: []const u8 = "e2e00001-15cf-4074-9331-6fac42a4920b";
+//const btCharId: usize = 1; // choose second characteristic, as it is writable
+
+// microbi:t v2
+const btPeriphStr: []const u8 = "D1:FB:74:83:54:34";
+const btServiceUuidStr: []const u8 = "e2e10001-15cf-4074-9331-6fac42a4920b";
+const btCharId: usize = 1; // choose second characteristic, as it is writable
 
 var btPeripheral: ble.simpleble_peripheral_t = undefined;
 var btService: ble.simpleble_service_t = undefined; //.{ .value = microbitUartServicePtr };
