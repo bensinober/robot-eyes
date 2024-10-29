@@ -15,22 +15,10 @@ const cmdBuf = new ArrayBuffer(6)
 const dvCmd = new DataView(cmdBuf)
 var ctxSnap
 
-/*document.getElementById("connectBtn").addEventListener("click", async(evt) => {
-  // connect to eyes
-  if ("bluetooth" in navigator) {
-    try {
-      //Device A4:06:E9:8E:00:0A HMSoft
-      // HMSoft uU8ptu87vOOkd/NIwmqtDg== false
-      //console.log("here")
-      await connectToEyes()
-    } catch(err) {
-      console.log(err)
-    }
-  } else {
-    console.log("you need to activate web bluetooth api in browser!")
-  }
-})*/
-
+// Websocket client
+const ws = new WebSocket(`wss://${window.location.host}/ws?channels=robot-eyes`)
+ws.addEventListener("open", event => ws.binaryType = "arraybuffer")
+ws.addEventListener("message", wsMessageHandler)
 
 // transpond x, y (640,640) to u8 (255,255)
 const writeToEyes = async function(x, y) {
@@ -106,15 +94,13 @@ const setSnapContext = function(ctx) {
   ctxSnap = ctx
 }
 
-const ws = new WebSocket(`wss://${window.location.host}/ws?channels=robot-eyes`)
-ws.addEventListener("open", event => ws.binaryType = "arraybuffer")
-ws.addEventListener("message", async event => {
-  //console.log(`INCOMING: ${event.data}`)
-  const dv = new DataView(event.data);
+async function wsMessageHandler(evt) {
+  //console.log(`INCOMING: ${evt.data}`)
+  const dv = new DataView(evt.data);
   const cmd = dv.getUint8(0)
   const mode = dv.getUint8(1)
   const len = dv.getInt32(2, true)
-  const data = event.data.slice(6)
+  const data = evt.data.slice(6)
   // Game Mode
   gameMode = GameModes[parseInt(mode, 10)]
   document.getElementById("gameMode").innerHTML = gameMode.toLowerCase()
@@ -163,6 +149,6 @@ ws.addEventListener("message", async event => {
   default:
     console.log(`unknow CMD: ${cmd}`)
   }
-})
+}
 
 export { writeToEyes, connectToEyes, sendGameMode, clearData, setSnapContext, activateEyes, deactivateEyes }

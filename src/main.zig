@@ -113,10 +113,10 @@ const MsgHandler = struct {
             disconnectBluetooth();
         } else {
             std.log.debug("ignoring unknown command: {d}", .{ cmd });
-            const res = try self.allocator.alloc(u8, 9);
+            const res = try self.allocator.alloc(u8, 8);
             const mb: u8 = std.mem.asBytes(&gameMode)[0];
-            @memcpy(res, &[_]u8{ 0, mb, 2, 0, 0, 0, 0x4e, 0x4f, 0x4b }); // NOK
-            _ = try wsClient.write(res);
+            @memcpy(res, &[_]u8{ 0, mb, 2, 0, 0, 0, 0x4b, 0x4f }); // KO
+            _ = try wsClient.writeBin(res);
         }
     }
     pub fn close(_: MsgHandler) void {}
@@ -287,6 +287,10 @@ const Tracker = struct {
         if (btConnected == false) {
             return;
         }
+        const t = std.time.milliTimestamp();
+        if (@mod(t, 2) != 0) {
+            return; // only send 1/5 of signals not to choke BTLE peripheral
+        }
         // x, y is only two u8 bytes + 0, 2
         const x1: f32 = @floatFromInt(p.x);
         const y1: f32 = @floatFromInt(p.y);
@@ -298,7 +302,7 @@ const Tracker = struct {
         var cmd: [5]u8 = .{ 0, 2, xByte, yByte, 13 };
         //std.debug.print("Sending x, y: ({d}, {d}) to eyes: {any} \n", .{x2, y2, cmd});
         const cmd_c: [*c]const u8 = @ptrCast(&cmd);
-        const err_code = ble.simpleble_peripheral_write_request(btPeripheral, btService.uuid, btService.characteristics[0].uuid, cmd_c, 5);
+        const err_code = ble.simpleble_peripheral_write_request(btPeripheral, btService.uuid, btService.characteristics[btCharId].uuid, cmd_c, 5);
         if (err_code != @as(c_uint, @bitCast(ble.SIMPLEBLE_SUCCESS))) {
             std.debug.print("Failed to send data to eyes.\n", .{});
         }
@@ -673,13 +677,15 @@ pub fn connectBluetooth() void {
 }
 
 pub fn disconnectBluetooth() void {
-    if (btConnected == false) {
-        return; // no need to disconnect
-    }
-    const err_code = ble.simpleble_peripheral_disconnect(btPeripheral);
-    if (err_code != @as(c_uint, @bitCast(ble.SIMPLEBLE_SUCCESS))) {
+    const errUnpair = ble.simpleble_peripheral_unpair(btPeripheral);
+    if (errUnpair != @as(c_uint, @bitCast(ble.SIMPLEBLE_SUCCESS))) {
         std.debug.print("Failed to disconnect to bluetooth peripheral\n", .{});
     }
+    const errDisconect = ble.simpleble_peripheral_disconnect(btPeripheral);
+    if (errDisconect != @as(c_uint, @bitCast(ble.SIMPLEBLE_SUCCESS))) {
+        std.debug.print("Failed to disconnect to bluetooth peripheral\n", .{});
+    }
+    std.debug.print("Disconnected bluetooth peripheral: {any}\n", .{btPeripheral});
     btPeripheral = undefined;
     btConnected = false;
     return;
