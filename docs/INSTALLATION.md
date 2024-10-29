@@ -78,7 +78,13 @@ for info: https://support.zivid.com/en/latest/getting-started/software-installat
     sudo apt install ./*.deb
     sudo apt install clinfo
 
+    mkdir ~/opencv_build && cd ~/opencv_build
+    git clone https://github.com/opencv/opencv.git
+    git clone https://github.com/opencv/opencv_contrib.git
+
     CC="zig cc" CXX="zig c++" cmake \
+        -B builddir \
+        -S ./opencv \
         -D CMAKE_BUILD_TYPE=RELEASE \
         -D WITH_IPP=OFF \
         -D WITH_OPENGL=OFF \
@@ -87,7 +93,7 @@ for info: https://support.zivid.com/en/latest/getting-started/software-installat
         -D WITH_OPENCL=ON \
         -D CMAKE_INSTALL_PREFIX=/usr/local \
         -D OPENCV_DNN_OPENCL=ON \
-        -D OPENCV_EXTRA_MODULES_PATH=../opencv_contrib/modules/ \
+        -D OPENCV_EXTRA_MODULES_PATH=./opencv_contrib/modules/ \
         -D OPENCV_ENABLE_NONFREE=ON \
         -D OPENCV_GAPI_ONNX_MODEL_PATH=OFF \
         -D WITH_JASPER=OFF \
@@ -103,7 +109,9 @@ for info: https://support.zivid.com/en/latest/getting-started/software-installat
         -D BUILD_opencv_python3=NO \
         -D OPENCV_GENERATE_PKGCONFIG=ON \
         -D ENABLE_FAST_MATH=1 \
-        ../opencv
+        ./opencv
+
+    cd builddir && make -j8 && make preinstall && sudo make install && sudo ldconfig
 
 to run with opencl + dnn
 
@@ -121,7 +129,7 @@ docker run -itu root:root  --rm --device /dev/dri:/dev/dri openvino/ubuntu22_dev
 
 ## OpenCV install
 
-    sudo apt-get install -y --no-install-recommends make cmake unzip git libv4l-dev libimath-dev \
+    sudo apt-get install -y --no-install-recommends make cmake unzip git libv4l-dev libimath-dev libx264-dev libxvidcore-dev \
     xz-utils curl ca-certificates libcurl4-openssl-dev libssl-dev libgtk2.0-dev libtbb-dev libavcodec-dev libavformat-dev libswscale-dev \
     libtbb2 libjpeg-dev libpng-dev libtiff-dev libdc1394-dev libblas-dev libopenblas-dev libeigen3-dev liblapack-dev libatlas-base-dev gfortran
 
@@ -144,9 +152,10 @@ cd opencv
 ```
 build
 ```
-mkdir -p build && cd build
 
 CC="zig cc" CXX="zig c++" cmake \
+    -B builddir \
+    -S ./opencv \
     -D CMAKE_BUILD_TYPE=RELEASE \
     -D WITH_IPP=OFF \
     -D WITH_OPENGL=OFF \
@@ -154,7 +163,7 @@ CC="zig cc" CXX="zig c++" cmake \
     -D WITH_OPENVINO=OFF \
     -D CMAKE_INSTALL_PREFIX=/usr/local \
     -D OPENCV_DNN_OPENCL=ON \
-    -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules/ \
+    -D OPENCV_EXTRA_MODULES_PATH=./opencv_contrib/modules/ \
     -D OPENCV_ENABLE_NONFREE=ON \
     -D OPENCV_GAPI_ONNX_MODEL_PATH=OFF \
     -D WITH_JASPER=OFF \
@@ -169,7 +178,7 @@ CC="zig cc" CXX="zig c++" cmake \
     -D BUILD_opencv_python2=NO \
     -D BUILD_opencv_python3=NO \
     -D OPENCV_GENERATE_PKGCONFIG=ON \
-    ../cmake
+    ./cmake
 ```
 
 Optionally with Nvidia Cuda support:
@@ -179,10 +188,13 @@ Optionally with Nvidia Cuda support:
 
 And cudadnn
 
-    wget https://developer.nvidia.com/downloads/compute/cudnn/secure/8.9.3/local_installers/11.x/cudnn-local-repo-ubuntu2204-8.9.3.28_1.0-1_amd64.deb/
-    sudo dpkg -i cudnn-local-repo-ubuntu2204-8.9.3.28_1.0-1_amd64.deb
-    sudo cp /var/cudnn-local-repo-ubuntu2204-8.9.3.28/cudnn-local-7F7A158C-keyring.gpg /usr/share/keyrings/
+ wget https://developer.download.nvidia.com/compute/cuda/12.2.0/local_installers/cuda_12.2.0_535.54.03_linux.run
 
+    wget https://developer.download.nvidia.com/compute/cudnn/9.4.0/local_installers/cudnn-local-repo-ubuntu2004-9.4.0_1.0-1_amd64.deb
+    sudo dpkg -i cudnn-local-repo-ubuntu2004-9.4.0_1.0-1_amd64.deb
+    sudo cp /var/cudnn-local-repo-ubuntu2004-9.4.0/cudnn-*-keyring.gpg /usr/share/keyrings/
+    sudo apt-get update
+    sudo apt-get -y install cudnn
 
 CUDNN_TAR_FILE="cudnn-linux-x86_64-8.5.0.96_cuda11-archive.tar.xz"
 wget https://developer.download.nvidia.com/compute/redist/cudnn/v8.5.0/local_installers/11.5/cudnn-linux-x86_64-8.5.0.96_cuda11-archive.tar.xz
@@ -206,8 +218,16 @@ wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/libnpp-11-8_11.8.0.86-1_amd64.deb
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/libnpp-dev-11-8_11.8.0.86-1_amd64.deb
 
+
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
+sudo mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600
+wget https://developer.download.nvidia.com/compute/cuda/12.6.1/local_installers/cuda-repo-ubuntu2004-12-6-local_12.6.1-560.35.03-1_amd64.deb
+sudo dpkg -i cuda-repo-ubuntu2004-12-6-local_12.6.1-560.35.03-1_amd64.deb
+sudo cp /var/cuda-repo-ubuntu2004-12-6-local/cuda-*-keyring.gpg /usr/share/keyrings/
+sudo apt-get update
+sudo apt-get -y install cuda-toolkit-12-6
 ```
-export OPENCV_VERSION=4.8.0
+export OPENCV_VERSION=4.10.0
 mkdir /tmp/opencv && cd /tmp/opencv
 curl -Lo opencv.zip https://github.com/opencv/opencv/archive/refs/tags/${OPENCV_VERSION}.zip
 unzip -q opencv.zip
@@ -216,48 +236,41 @@ unzip -q opencv_contrib.zip
 cd opencv-${OPENCV_VERSION} && make build && cd build
 
 CC="zig cc" CXX="zig c++" cmake \
+    -B builddir \
+    -S ./opencv \
     -D CMAKE_BUILD_TYPE=RELEASE \
-    -D WITH_IPP=OFF \
-    -D WITH_OPENGL=OFF \
-    -D WITH_QT=OFF \
-    -D WITH_OPENVINO=OFF \
-    -D WITH_OPENCL=OFF \
-    -D CMAKE_INSTALL_PREFIX=/usr/local \
-    -D OPENCV_DNN_OPENCL=ON \
-    -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib-4.8.0/modules/ \
-    -D OPENCV_ENABLE_NONFREE=ON \
-    -D OPENCV_GAPI_ONNX_MODEL_PATH=ON \
-    -D WITH_JASPER=OFF \
-    -D WITH_TBB=ON \
-    -D BUILD_DOCS=OFF \
-    -D BUILD_EXAMPLES=OFF \
-    -D BUILD_TESTS=OFF \
-    -D BUILD_PERF_TESTS=OFF \
-    -D BUILD_opencv_java=NO \
-    -D BUILD_opencv_python=NO \
-    -D BUILD_opencv_python2=NO \
-    -D BUILD_opencv_python3=NO \
-    -D OPENCV_GENERATE_PKGCONFIG=ON \
+    -D OPENCV_EXTRA_MODULES_PATH=./opencv_contrib/modules/ \
+    -D INSTALL_PYTHON_EXAMPLES=OFF \
     -D WITH_CUDA=ON \
+    -D WITH_CUDNN=ON \
+    -D OPENCV_DNN_CUDA=ON \
     -D ENABLE_FAST_MATH=1 \
     -D CUDA_FAST_MATH=1 \
     -D WITH_CUBLAS=1 \
-    -D CUDA_ARCH_PTX="" \
+    -D WITH_QT=OFF \
+    -D BUILD_TIFF=ON \
+    -D WITH_FFMPEG=ON \
+    -D WITH_GSTREAMER=ON \
+    -D BUILD_TESTS=OFF \
+    -D WITH_EIGEN=ON \
+    -D WITH_V4L=ON \
+    -D WITH_LIBV4L=ON \
+    -D WITH_PROTOBUF=ON \
+    -D WITH_FFMPEG=ON \
+    -D WITH_OPENCL=ON \
+    -D OPENCV_ENABLE_NONFREE=ON \
+    -D ENABLE_PRECOMPILED_HEADERS=YES \
+    -D EIGEN_INCLUDE_PATH=/usr/include/eigen3 \
     -D CUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda/ \
     -D BUILD_opencv_cudacodec=OFF \
-    -D WITH_CUDNN=ON \
-    -D OPENCV_DNN_CUDA=ON \
-    -D CUDA_GENERATION=Auto \
-    -D CUDNN_INCLUDE_DIR=/usr/include/x86_64-linux-gnu/ \
-    -D CUDNN_LIBRARY=/usr/lib/x86_64-linux-gnu/ \
-    ..
+    -D OPENCV_GENERATE_PKGCONFIG=ON \
+    -D BUILD_EXAMPLES=OFF \
+    -D CMAKE_CXX_FLAGS="-march=native -mavx512f -mno-avx" \
+    -D CMAKE_C_FLAGS="-march=native -mavx512f -mno-avx" \
+    -D BUILD_opencv_world=OFF
 ```
-
 ```
-make -j8
-make preinstall
-sudo make install
-sudo ldconfig
+cd builddir && make -j8 && make preinstall && sudo make install && sudo ldconfig
 ```
 
 ## Bluetooth
@@ -390,11 +403,11 @@ Description=Start robot-eyes bunjs server
 After=network-online.target
 
 [Service]
-WorkingDirectory=/home/robot-eyz/robot-eyes
-User=robot-eyz
-Group=robot-eyz
+WorkingDirectory=/home/bjorvika/robot-eyes
+User=bjorvika
+Group=bjorvika
 Restart=always
-ExecStart=/home/robot-eyz/.bun/bin/bun run server.js
+ExecStart=/home/bjorvika/.bun/bin/bun run server.js
 
 [Install]
 WantedBy=multi-user.target
@@ -409,12 +422,12 @@ Description=Start robot-eyes app
 After=robot-eyes-bunjs.service
 
 [Service]
-WorkingDirectory=/home/radxa/robot-eyes
-User=radxa
-Group=radxa
+WorkingDirectory=/home/bjorvika/robot-eyes
+User=bjorvika
+Group=bjorvika
 Restart=always
-#ExecStart=/home/radxa/robot-eyes/zig-out/bin/robot-eyes 0 models/MobileNetSSD_deploy.caffemodel
-ExecStart=/home/radxa/robot-eyes/zig-out/bin/robot-eyes 0 models/yolo-fastest-1.1.weights
+#ExecStart=/home/bjorvika/robot-eyes/zig-out/bin/robot-eyes 0 models/MobileNetSSD_deploy.caffemodel
+ExecStart=/home/bjorvika/robot-eyes/zig-out/bin/robot-eyes 0 models/yolo-fastest-1.1.weights
 Environment=DISPLAY=:0
 Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
 Environment=OPENCV_DNN_OPENCL_ALLOW_ALL_DEVICES=1
@@ -448,7 +461,7 @@ EOF
 cat <<'EOF' > ~/.config/autostart/robot-eyes.desktop
 [Desktop Entry]
 Type=Application
-Path=/home/robot-eyz/robot-eyes
+Path=/home/bjorvika/robot-eyes
 Exec=sh -c "OPENCV_DNN_OPENCL_ALLOW_ALL_DEVICES=1; sleep 1; cd robot-eyes; zig-out/bin/robot-eyes 4 0 models/yolo-fastest-1.1-xl.weights;"
 Name=robot-eyes
 Comment=Autostart robot-eyes at login

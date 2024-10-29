@@ -2,9 +2,8 @@
     .name = "robot-eyes",
     .version = "1.0.1",
     .dependencies = .{
-      .zigcv = .{
-        .path = "",
-      },
+      .zigcv = .{ .path = "" },
+      //.opencv4 = .{ .path = "" },
       .websocket = .{
         .url = "https://github.com/karlseguin/websocket.zig/archive/c77f87d0e6548865636eb9781106a8be72e5755a.tar.gz",
         .hash = "12208720b772330f309cfb48957f4152ee0930b716837d0c1d07fee2dea2f4dc712e",
