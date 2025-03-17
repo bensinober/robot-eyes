@@ -1,12 +1,10 @@
 .{
-    .name = "robot-eyes",
+    .name = .robotEyes,
     .version = "1.0.1",
     .dependencies = .{
-      .zigcv = .{ .path = "" },
-      //.opencv4 = .{ .path = "" },
       .websocket = .{
-        .url = "https://github.com/karlseguin/websocket.zig/archive/c77f87d0e6548865636eb9781106a8be72e5755a.tar.gz",
-        .hash = "12208720b772330f309cfb48957f4152ee0930b716837d0c1d07fee2dea2f4dc712e",
+        .url = "https://github.com/karlseguin/websocket.zig/archive/4e8fb28b680d22e633541e810e8e6190e7748651.tar.gz",
+        .hash = "1220971bba07063e3373509f9997037b247a85f4c43a8f3f608e2b25d241fb72dd6d",
       },
     },
     .paths = .{
@@ -17,4 +15,5 @@
       "build.zig.zon",
       "include",
     },
+    .fingerprint = 0xfe22af12a4b49398,
 }

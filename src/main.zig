@@ -95,11 +95,11 @@ const MsgHandler = struct {
     allocator: Allocator,
 
     // Handle Commands via websocket
-    pub fn handle(self: MsgHandler, msg: websocket.Message) !void {
-        std.log.debug("got msg: {any}", .{msg.data});
-        const cmd = msg.data[0];
+    pub fn serverMessage(self: MsgHandler, msg: []u8) !void {
+        std.log.debug("got msg: {any}", .{msg});
+        const cmd = msg[0];
         if (cmd == 1) {
-            const mode: GameMode = @enumFromInt(msg.data[1]);
+            const mode: GameMode = @enumFromInt(msg[1]);
             lastGameMode = gameMode;
             gameMode = mode;
             const mb: u8 = std.mem.asBytes(&gameMode)[0];
@@ -112,7 +112,7 @@ const MsgHandler = struct {
         } else if (cmd == 3) {
             disconnectBluetooth();
         } else {
-            std.log.debug("ignoring unknown command: {d}", .{ cmd });
+            std.log.debug("ignoring unknown command: {d}", .{cmd});
             const res = try self.allocator.alloc(u8, 8);
             const mb: u8 = std.mem.asBytes(&gameMode)[0];
             @memcpy(res, &[_]u8{ 0, mb, 2, 0, 0, 0, 0x4b, 0x4f }); // KO
@@ -614,20 +614,20 @@ pub fn connectBluetooth() void {
 
     var selection: usize = undefined;
     var found: bool = false;
-        var i: usize = 0;
-        while (i < ble.peripheral_list_len) : (i +%= 1) {
-            const peripheral: ble.simpleble_peripheral_t = ble.peripheral_list[i];
-            //var peripheral_identifier: [*c]u8 = ble.simpleble_peripheral_identifier(peripheral);
-            const peripheral_address: [*c]u8 = ble.simpleble_peripheral_address(peripheral);
-            const periphStr = std.mem.span(@as([*:0]u8, @ptrCast(@alignCast(peripheral_address))));
-            std.debug.print("comp peripheral: {s} vs {s}\n", .{ periphStr, btPeriphStr });
-            if (std.mem.eql(u8, periphStr, btPeriphStr)) {
-                std.debug.print("found peripheral: {s} id: {any}\n", .{ btPeriphStr, selection });
-                selection = i;
-                found = true;
-                break;
-            }
+    var i: usize = 0;
+    while (i < ble.peripheral_list_len) : (i +%= 1) {
+        const peripheral: ble.simpleble_peripheral_t = ble.peripheral_list[i];
+        //var peripheral_identifier: [*c]u8 = ble.simpleble_peripheral_identifier(peripheral);
+        const peripheral_address: [*c]u8 = ble.simpleble_peripheral_address(peripheral);
+        const periphStr = std.mem.span(@as([*:0]u8, @ptrCast(@alignCast(peripheral_address))));
+        std.debug.print("comp peripheral: {s} vs {s}\n", .{ periphStr, btPeriphStr });
+        if (std.mem.eql(u8, periphStr, btPeriphStr)) {
+            std.debug.print("found peripheral: {s} id: {any}\n", .{ btPeriphStr, selection });
+            selection = i;
+            found = true;
+            break;
         }
+    }
     if (!found) {
         std.debug.print("Could not find peripheral with mac: {s}\n", .{btPeriphStr});
         return;
@@ -653,26 +653,26 @@ pub fn connectBluetooth() void {
 
     // Service
     const services_count: usize = ble.simpleble_peripheral_services_count(btPeripheral);
-        var s: usize = 0;
-        while (s < services_count) : (s +%= 1) {
-            var service: ble.simpleble_service_t = undefined;
-            err_code = ble.simpleble_peripheral_services_get(btPeripheral, s, &service);
-            if (err_code != @as(c_uint, @bitCast(ble.SIMPLEBLE_SUCCESS))) {
-                std.debug.print("Invalid bluetooth service selection\n", .{});
-                ble.clean_on_exit(adapter);
-                return;
-            }
-
-            // Select HMSoft Serial service
-            var serviceStr: []const u8 = @ptrCast(@alignCast(&service.uuid.value));
-            std.debug.print("comp service uuid: {s} vs {s}\n", .{ serviceStr, btServiceUuidStr });
-            if (std.mem.eql(u8, serviceStr[0..36], btServiceUuidStr[0..36])) {
-                std.debug.print("found right UART service: {s}\n", .{btServiceUuidStr});
-                btService = service;
-                btConnected = true;
-                break;
-            }
+    var s: usize = 0;
+    while (s < services_count) : (s +%= 1) {
+        var service: ble.simpleble_service_t = undefined;
+        err_code = ble.simpleble_peripheral_services_get(btPeripheral, s, &service);
+        if (err_code != @as(c_uint, @bitCast(ble.SIMPLEBLE_SUCCESS))) {
+            std.debug.print("Invalid bluetooth service selection\n", .{});
+            ble.clean_on_exit(adapter);
+            return;
         }
+
+        // Select HMSoft Serial service
+        var serviceStr: []const u8 = @ptrCast(@alignCast(&service.uuid.value));
+        std.debug.print("comp service uuid: {s} vs {s}\n", .{ serviceStr, btServiceUuidStr });
+        if (std.mem.eql(u8, serviceStr[0..36], btServiceUuidStr[0..36])) {
+            std.debug.print("found right UART service: {s}\n", .{btServiceUuidStr});
+            btService = service;
+            btConnected = true;
+            break;
+        }
+    }
     return;
 }
 
@@ -835,7 +835,7 @@ pub fn main() anyerror!void {
     defer certFile.close();
 
     _ = try std.crypto.Certificate.Bundle.addCertsFromFile(&certBundle, allocator, certFile);
-    wsClient = try websocket.connect(allocator, "localhost", 8665, .{ .tls = true, .ca_bundle = certBundle });
+    wsClient = try websocket.Client.init(allocator, .{ .host = "localhost", .port = 8665, .tls = true, .ca_bundle = certBundle });
     defer wsClient.deinit();
 
     // Game mode manager in separate thread
